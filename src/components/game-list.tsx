@@ -57,67 +57,36 @@ function chip(active: boolean) {
   }`;
 }
 
+/** Just what you scan the list for; the rest is on the game page. */
 function GameRow({ game }: { game: Entry }) {
   const key = [game.players && `${game.players} players`, game.time].filter(Boolean).join(" · ");
-  const rest = [game.age, game.price].filter(Boolean).join(" · ");
   return (
-    <li className="grid grid-cols-[auto_1fr_auto] gap-x-4 border-b border-black/5 py-5 sm:grid-rows-[auto_1fr] dark:border-white/10">
-      <Link href={gamePath(game)} prefetch={false} className="block sm:row-span-2">
-        <Cover game={game} size="sm" className="h-32 w-28 sm:h-44 sm:w-40" />
+    <li className="flex gap-4 border-b border-black/5 py-4 dark:border-white/10">
+      <Link href={gamePath(game)} prefetch={false} className="block shrink-0">
+        <Cover game={game} size="sm" className="h-32 w-28 sm:h-40 sm:w-36" />
       </Link>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <Link
-            href={gamePath(game)}
-            prefetch={false}
-            className="text-lg font-medium leading-snug text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
-          >
-            {game.title}
-          </Link>
-          {game.en ? <span className="text-sm text-neutral-500 dark:text-neutral-400">{game.en}</span> : null}
-        </div>
-        {game.publisher ? <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{game.publisher}</p> : null}
-        {key || rest ? (
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {key ? <span className="font-semibold text-neutral-800 dark:text-neutral-100">{key}</span> : null}
-            {key && rest ? " · " : null}
-            {rest}
-          </p>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={gamePath(game)}
+          prefetch={false}
+          className="text-lg font-medium leading-snug text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
+        >
+          {game.title}
+        </Link>
+        {game.buzz ? (
+          <span className="ml-2 rounded bg-rose-500/15 px-1.5 py-0.5 align-middle text-xs font-semibold text-rose-700 dark:text-rose-300">
+            Buzz
+          </span>
         ) : null}
-        <Booths game={game} className="mt-1 text-sm" />
+        {key ? <p className="mt-0.5 text-sm font-semibold text-neutral-800 dark:text-neutral-100">{key}</p> : null}
+        <Booths game={game} className="mt-0.5 text-sm" />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <BggScore game={game} />
           {game.bgg?.demoOnly ? <DemoOnly /> : null}
         </div>
       </div>
-      <div className="-mr-1 -mt-1 sm:row-span-2">
+      <div className="-mr-1 -mt-1 shrink-0">
         <MarkControl id={game.id} title={game.title} compact />
-      </div>
-      <div className="col-span-2 min-w-0 sm:col-span-1 sm:col-start-2">
-        {game.blurb ? (
-          <p className="mt-2 leading-relaxed text-neutral-600 dark:text-neutral-300">{game.blurb}</p>
-        ) : null}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-          {game.buzz ? (
-            <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-700 dark:text-rose-300">Buzz</span>
-          ) : null}
-          {game.kind ? (
-            <span
-              className={`rounded px-1.5 py-0.5 ${
-                game.kind === "New"
-                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                  : "bg-sky-500/15 text-sky-700 dark:text-sky-300"
-              }`}
-            >
-              {game.kind}
-            </span>
-          ) : null}
-          {game.categories.slice(0, 3).map((c) => (
-            <span key={c} className="rounded bg-neutral-500/15 px-1.5 py-0.5 text-neutral-700 dark:text-neutral-300">
-              {c}
-            </span>
-          ))}
-        </div>
       </div>
     </li>
   );
