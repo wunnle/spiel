@@ -14,9 +14,12 @@ import { PlayFacts } from "./play-facts";
 
 const PAGE = 60;
 
-type Kind = "All" | "New" | "Expansion";
+type Kind = "New" | "Expansion";
 type Sort = "popular" | "score" | "az" | "booth";
-const KINDS: Kind[] = ["All", "New", "Expansion"];
+const KINDS: { id: Kind; label: string }[] = [
+  { id: "New", label: "New games" },
+  { id: "Expansion", label: "Expansions" },
+];
 const SORTS: { id: Sort; label: string }[] = [
   { id: "popular", label: "Most wanted" },
   { id: "score", label: "BGG score" },
@@ -49,6 +52,11 @@ const SORTERS: Record<Sort, (a: Entry, b: Entry) => number> = {
 
 const CATEGORY_COUNTS = new Map(CATEGORIES.map((c) => [c, CATALOG.filter((g) => g.categories.includes(c)).length]));
 const CATEGORY_ORDER = [...CATEGORIES].sort(byFamily);
+
+/** Adds the item if it's missing, removes it if it's there. */
+function toggle<T>(list: T[], item: T) {
+  return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+}
 
 const euros = (n: number) => n.toLocaleString("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
@@ -154,11 +162,12 @@ function Row({
 
 export function GameList() {
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<Kind>("All");
+  // Nothing ticked means no filter, like categories.
+  const [kinds, setKinds] = useState<Kind[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [buzzOnly, setBuzzOnly] = useState(false);
   const [mine, setMine] = useState<Mark | null>(null);
-  const [hall, setHall] = useState<string | null>(null);
+  const [halls, setHalls] = useState<string[]>([]);
   const [sort, setSort] = useState<Sort>("popular");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const marks = useMarks();
@@ -172,12 +181,12 @@ export function GameList() {
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matches = CATALOG.filter((g) => {
-      if (kind !== "All" && g.kind !== kind) return false;
+      if (kinds.length && !(g.kind && kinds.includes(g.kind))) return false;
       if (buzzOnly && !g.buzz) return false;
       if (mine && marks[g.id] !== mine) return false;
       // Any of the ticked categories.
       if (categories.length && !g.categories.some((c) => categories.includes(c))) return false;
-      if (hall && !g.booths.some((b) => splitBooth(b).hall === hall)) return false;
+      if (halls.length && !g.booths.some((b) => halls.includes(splitBooth(b).hall))) return false;
       if (!q) return true;
       const booths = g.booths.map((b) => splitBooth(b).stand).join(" ");
       return [g.title, g.de, g.en, g.publisher, g.exhibitor, g.authors, g.blurb, booths].some((f) =>
@@ -185,23 +194,23 @@ export function GameList() {
       );
     });
     return matches.sort(SORTERS[sort]);
-  }, [query, kind, categories, buzzOnly, mine, marks, hall, sort]);
+  }, [query, kinds, categories, buzzOnly, mine, marks, halls, sort]);
 
   // Show a page at a time; any filter change starts again from the top.
-  const filterKey = [query, kind, categories.join(","), buzzOnly, mine, hall, sort].join("|");
+  const filterKey = [query, kinds.join(","), categories.join(","), buzzOnly, mine, halls.join(","), sort].join("|");
   const [page, setPage] = useState({ key: filterKey, count: PAGE });
   const count = page.key === filterKey ? page.count : PAGE;
 
 
-  const active = [kind !== "All", buzzOnly, !!hall].filter(Boolean).length + categories.length;
+  const active = kinds.length + halls.length + categories.length + Number(buzzOnly);
   function clearFilters() {
-    setKind("All");
+    setKinds([]);
     setBuzzOnly(false);
-    setHall(null);
+    setHalls([]);
     setCategories([]);
   }
   function toggleCategory(c: string) {
-    setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+    setCategories((prev) => toggle(prev, c));
   }
 
   // All / your three lists, as tabs over the list.
@@ -238,8 +247,14 @@ export function GameList() {
       <Section title="Type">
         <div className="flex flex-wrap gap-1.5">
           {KINDS.map((k) => (
-            <button key={k} type="button" onClick={() => setKind(k)} className={chip(kind === k)}>
-              {k}
+            <button
+              key={k.id}
+              type="button"
+              aria-pressed={kinds.includes(k.id)}
+              onClick={() => setKinds((v) => toggle(v, k.id))}
+              className={chip(kinds.includes(k.id))}
+            >
+              {k.label}
             </button>
           ))}
           <button type="button" onClick={() => setBuzzOnly((v) => !v)} className={chip(buzzOnly)}>
@@ -250,11 +265,14 @@ export function GameList() {
 
       <Section title="Hall">
         <div className="flex flex-wrap gap-1.5">
-          <button type="button" onClick={() => setHall(null)} className={chip(hall === null)}>
-            All
-          </button>
           {HALLS.map((h) => (
-            <button key={h} type="button" onClick={() => setHall((v) => (v === h ? null : h))} className={chip(hall === h)}>
+            <button
+              key={h}
+              type="button"
+              aria-pressed={halls.includes(h)}
+              onClick={() => setHalls((v) => toggle(v, h))}
+              className={chip(halls.includes(h))}
+            >
               {h}
             </button>
           ))}
