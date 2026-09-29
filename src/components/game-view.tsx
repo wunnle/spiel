@@ -133,13 +133,13 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
       </div>
 
       <dl className="mt-8 max-w-2xl">
+        <Fact label="Release">{details?.release}</Fact>
         <Fact label="Publisher">{game.publisher}</Fact>
-        <Fact label="Age">{game.age}</Fact>
         <Fact label="Designers">{game.authors}</Fact>
         <Fact label="Languages">{details?.languages?.join(", ")}</Fact>
+        <Fact label="Age">{game.age}</Fact>
         <Fact label="Expansion for">{expands?.length ? expands : undefined}</Fact>
         <Fact label="Illustrators">{details?.illustrators}</Fact>
-        <Fact label="Release">{details?.release}</Fact>
       </dl>
 
       {description.length ? (
