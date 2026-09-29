@@ -29,16 +29,12 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 /** Players and playing time: what decides whether a game gets to the table. */
-function Tile({ label, value, small }: { label: string; value?: string; small?: boolean }) {
+function Tile({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
     <div className="rounded-lg bg-black/[0.04] px-4 py-2.5 dark:bg-white/[0.06]">
       <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</div>
-      <div
-        className={`font-semibold tabular-nums text-neutral-900 dark:text-neutral-50 ${small ? "text-lg" : "text-2xl"}`}
-      >
-        {value}
-      </div>
+      <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-50">{value}</div>
     </div>
   );
 }
@@ -132,7 +128,6 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
           <div className="mt-5 flex flex-wrap gap-2">
             <Tile label="Players" value={game.players} />
             <Tile label="Playing time" value={game.time} />
-            <Tile label="Age" value={game.age} small />
           </div>
 
           <Booths game={game} className="mt-5 text-lg" />
@@ -149,6 +144,7 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
       </div>
 
       <dl className="mt-8 max-w-2xl">
+        <Fact label="Age">{game.age}</Fact>
         <Fact label="Designers">{game.authors}</Fact>
         <Fact label="Languages">{details?.languages?.join(", ")}</Fact>
         <Fact label="Expansion for">{expands?.length ? expands : undefined}</Fact>
