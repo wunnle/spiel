@@ -1,75 +1,160 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useMarks } from "@/lib/marks";
 import { SYNC_ENABLED, signIn, signOut, startSync, useSync } from "@/lib/sync";
 
-/** Sign in with Google to keep your marks on every device. Hidden when sync isn't configured. */
+// The QR library only loads when the dialog opens.
+const TransferDialog = lazy(() => import("./transfer-dialog").then((m) => ({ default: m.TransferDialog })));
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4">
+      <path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z" />
+      <path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23z" />
+      <path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.2a11 11 0 0 0 0 9.9z" />
+      <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4z" />
+    </svg>
+  );
+}
+
+const MENU_ITEM =
+  "block w-full rounded-md px-2 py-1.5 text-left font-medium text-neutral-700 hover:bg-black/[0.04] disabled:opacity-40 disabled:hover:bg-transparent dark:text-neutral-200 dark:hover:bg-white/[0.06]";
+
+/**
+ * The header's account menu: your avatar when signed in (a person icon otherwise), holding sync status,
+ * "Send to SPIEL app" and sign-out. Signed out, a Sign in button sits beside it.
+ */
 export function Account() {
   const sync = useSync();
+  const marks = useMarks();
   const [menu, setMenu] = useState(false);
+  const [transfer, setTransfer] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => startSync(), []);
 
-  if (!SYNC_ENABLED || !sync.ready) return null;
+  // Close the menu on an outside click or Escape.
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !ref.current?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [menu]);
 
-  if (!sync.user) {
-    return (
-      <button
-        type="button"
-        onClick={() => void signIn()}
-        title="Keep your marks on every device"
-        className="flex items-center gap-2 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4">
-          <path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z" />
-          <path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23z" />
-          <path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.2a11 11 0 0 0 0 9.9z" />
-          <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4z" />
-        </svg>
-        Sign in
-      </button>
-    );
-  }
+  // What the SPIEL app can take: games still to find, with an official id (shortlist-only ones are "pick:…").
+  const lists = useMemo(() => {
+    const of = (m: string) => Object.entries(marks).flatMap(([id, v]) => (v === m && !id.startsWith("pick:") ? [id] : []));
+    return {
+      interested: of("star"),
+      wantToBuy: of("buy"),
+      skipped: Object.entries(marks).filter(([id, v]) => v !== "bought" && id.startsWith("pick:")).length,
+    };
+  }, [marks]);
+  const canSend = lists.interested.length + lists.wantToBuy.length > 0;
 
   const { user, status } = sync;
   const note = { idle: "", syncing: "Syncing…", synced: "Marks synced", error: "Will sync when back online" }[status];
+
   return (
-    <div className="relative">
+    <div ref={ref} className="relative flex items-center gap-2">
+      {SYNC_ENABLED && sync.ready && !user ? (
+        <button
+          type="button"
+          onClick={() => void signIn()}
+          title="Keep your marks on every device"
+          className="flex items-center gap-2 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30"
+        >
+          <GoogleIcon />
+          Sign in
+        </button>
+      ) : null}
+
       <button
         type="button"
         onClick={() => setMenu((v) => !v)}
         aria-expanded={menu}
+        aria-label="Menu"
         className="flex items-center gap-2 rounded-full text-sm text-neutral-600 dark:text-neutral-300"
       >
-        {user.avatar ? (
+        {user?.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatar} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full" />
-        ) : (
+        ) : user ? (
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900">
             {(user.name ?? user.email ?? "?")[0].toUpperCase()}
           </span>
+        ) : (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.06] text-neutral-500 dark:bg-white/[0.1] dark:text-neutral-400">
+            <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21a8 8 0 0 1 16 0" />
+            </svg>
+          </span>
         )}
-        <span className="hidden sm:inline">{note}</span>
+        {user && note ? <span className="hidden sm:inline">{note}</span> : null}
       </button>
+
       {menu ? (
-        <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border border-black/10 bg-white p-3 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900">
-          <p className="font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
-          {user.name ? <p className="text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
-          <p className="mt-2 text-neutral-500 dark:text-neutral-400">
-            Your marks sync to every device you sign in on.{note ? ` ${note}.` : ""}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setMenu(false);
-              void signOut();
-            }}
-            className="mt-3 font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
-          >
-            Sign out
-          </button>
-          <p className="mt-1 text-xs text-neutral-400">Signing out keeps your marks on this device.</p>
+        <div className="absolute right-0 top-full z-20 mt-2 w-64 rounded-lg border border-black/10 bg-white p-2 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900">
+          {user ? (
+            <div className="border-b border-black/5 px-2 pb-2 dark:border-white/10">
+              <p className="font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
+              {user.name ? <p className="text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Your marks sync to every device you sign in on.{note ? ` ${note}.` : ""}
+              </p>
+            </div>
+          ) : null}
+          <div className={user ? "pt-2" : ""}>
+            <button
+              type="button"
+              disabled={!canSend}
+              onClick={() => {
+                setMenu(false);
+                setTransfer(true);
+              }}
+              className={MENU_ITEM}
+            >
+              Send to SPIEL app
+              <span className="block text-xs font-normal text-neutral-500 dark:text-neutral-400">
+                {canSend ? "QR code for the app's Import favourites" : "Mark some games first"}
+              </span>
+            </button>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenu(false);
+                  void signOut();
+                }}
+                className={MENU_ITEM}
+              >
+                Sign out
+                <span className="block text-xs font-normal text-neutral-500 dark:text-neutral-400">
+                  Your marks stay on this device
+                </span>
+              </button>
+            ) : null}
+          </div>
         </div>
+      ) : null}
+
+      {transfer ? (
+        <Suspense fallback={null}>
+          <TransferDialog
+            interested={lists.interested}
+            wantToBuy={lists.wantToBuy}
+            skipped={lists.skipped}
+            onClose={() => setTransfer(false)}
+          />
+        </Suspense>
       ) : null}
     </div>
   );

@@ -11,7 +11,6 @@ import { Booths } from "./booths";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
 import { PlayFacts } from "./play-facts";
-import { TransferDialog } from "./transfer-dialog";
 
 const PAGE = 60;
 
@@ -24,7 +23,6 @@ const SORTS: { id: Sort; label: string }[] = [
   { id: "az", label: "A–Z" },
   { id: "booth", label: "Booth" },
 ];
-const LISTED_IDS = new Set(CATALOG.filter((g) => !g.unlisted).map((g) => g.id));
 // Numbered halls in order, then the named ones ("GA" is the Galeria).
 const HALLS = [...new Set(CATALOG.flatMap((g) => g.booths.map((b) => splitBooth(b).hall)))].sort((a, b) =>
   a.localeCompare(b, "en", { numeric: true }),
@@ -162,7 +160,6 @@ export function GameList() {
   const [mine, setMine] = useState<Mark | null>(null);
   const [hall, setHall] = useState<string | null>(null);
   const [sort, setSort] = useState<Sort>("popular");
-  const [transfer, setTransfer] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const marks = useMarks();
 
@@ -195,13 +192,6 @@ export function GameList() {
   const [page, setPage] = useState({ key: filterKey, count: PAGE });
   const count = page.key === filterKey ? page.count : PAGE;
 
-  // What the SPIEL app can take: games still to find, and only those with an official id.
-  const lists = useMemo(() => {
-    const of = (m: Mark) => Object.entries(marks).flatMap(([id, v]) => (v === m && LISTED_IDS.has(id) ? [id] : []));
-    return { interested: of("star"), wantToBuy: of("buy") };
-  }, [marks]);
-  const skipped = Object.entries(marks).filter(([id, m]) => m !== "bought" && !LISTED_IDS.has(id)).length;
-  const canSend = lists.interested.length + lists.wantToBuy.length > 0;
 
   const active = [kind !== "All", buzzOnly, !!hall].filter(Boolean).length + categories.length;
   function clearFilters() {
@@ -214,7 +204,7 @@ export function GameList() {
     setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   }
 
-  // All / your three lists, as tabs over the list; "Send to SPIEL app" sits at the end of the row.
+  // All / your three lists, as tabs over the list.
   const tabs = (className: string) => (
     <div className={`items-center justify-between gap-4 border-b border-black/10 dark:border-white/15 ${className}`}>
       <div role="tablist" aria-label="Your games" className="-mb-px flex overflow-x-auto [scrollbar-width:none]">
@@ -240,15 +230,6 @@ export function GameList() {
           ),
         )}
       </div>
-      {canSend ? (
-        <button
-          type="button"
-          onClick={() => setTransfer(true)}
-          className="hidden shrink-0 whitespace-nowrap text-sm font-medium text-neutral-700 underline underline-offset-4 sm:block dark:text-neutral-300"
-        >
-          Send to SPIEL app
-        </button>
-      ) : null}
     </div>
   );
 
@@ -308,7 +289,7 @@ export function GameList() {
     <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
       <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
-        <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
+        <div className="mb-3 lg:hidden">
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
@@ -317,15 +298,6 @@ export function GameList() {
           >
             Filters{active ? ` (${active})` : ""}
           </button>
-          {canSend ? (
-            <button
-              type="button"
-              onClick={() => setTransfer(true)}
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4 sm:hidden dark:text-neutral-300"
-            >
-              Send to SPIEL app
-            </button>
-          ) : null}
         </div>
         <div className={`${filtersOpen ? "mb-4 block rounded-lg border border-black/10 p-4 dark:border-white/15" : "hidden"} lg:block lg:border-0 lg:p-0`}>
           {filters}
@@ -392,14 +364,6 @@ export function GameList() {
         )}
       </section>
 
-      {transfer ? (
-        <TransferDialog
-          interested={lists.interested}
-          wantToBuy={lists.wantToBuy}
-          skipped={skipped}
-          onClose={() => setTransfer(false)}
-        />
-      ) : null}
     </div>
   );
 }
