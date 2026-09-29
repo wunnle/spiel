@@ -3,7 +3,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMarks } from "@/lib/marks";
-import { SaveOffline, TOOL_BUTTON, ToolRow } from "./offline";
+import { MenuItem, SaveOffline } from "./offline";
 
 // The QR library only loads when the dialog opens.
 const TransferDialog = lazy(() => import("./transfer-dialog").then((m) => ({ default: m.TransferDialog })));
@@ -36,19 +36,13 @@ function SendToApp() {
 
   return (
     <>
-      <ToolRow
-        icon={<QrIcon className="h-5 w-5" />}
-        title="Send to the SPIEL app"
-        note={
-          canSend
-            ? "A QR code for the official app's Import favourites, with your Interested and/or Want to buy games."
-            : "Mark some games as Interested or Want to buy first."
-        }
-        action={
-          <button type="button" disabled={!canSend} onClick={() => setOpen(true)} className={TOOL_BUTTON}>
-            Show QR
-          </button>
-        }
+      <MenuItem
+        icon={<QrIcon className="h-4 w-4" />}
+        label="Send to SPIEL app"
+        title="QR code for the official app's Import favourites"
+        onClick={() => setOpen(true)}
+        disabled={!canSend}
+        hint={canSend ? undefined : "Nothing marked"}
       />
       {/* At page level, so the dialog outlives the account menu it's opened from. */}
       {open
@@ -71,7 +65,7 @@ function SendToApp() {
 /** The occasional tools, kept in the account menu out of the way of browsing. */
 export function Tools() {
   return (
-    <div className="divide-y divide-black/5 dark:divide-white/10">
+    <div>
       <SendToApp />
       <SaveOffline />
     </div>

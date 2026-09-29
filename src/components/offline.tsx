@@ -91,22 +91,18 @@ export function SaveOffline() {
   if (!supported || !state.total) return null;
   const { total } = state;
   return (
-    <ToolRow
-      icon={<DownloadIcon className="h-5 w-5" />}
-      title="Save for offline"
-      note={
+    <MenuItem
+      icon={<DownloadIcon className="h-4 w-4" />}
+      label="Save for offline"
+      title="Download every cover so the list works with no signal in the halls"
+      onClick={save}
+      disabled={state.phase !== "idle" || !online}
+      hint={
         state.phase === "done"
-          ? "All covers are saved on this device ✓"
+          ? "Saved ✓"
           : state.phase === "saving"
-            ? `Saving covers… ${state.saved.toLocaleString("en")} / ${total.toLocaleString("en")}`
-            : `Downloads every cover (~${Math.round((total * 14) / 1000)} MB) so the list works with no signal in the halls. Pages you open are saved anyway.`
-      }
-      action={
-        state.phase === "idle" && online ? (
-          <button type="button" onClick={save} className={TOOL_BUTTON}>
-            Save
-          </button>
-        ) : null
+            ? `${state.saved.toLocaleString("en")} / ${total.toLocaleString("en")}`
+            : `~${Math.round((total * 14) / 1000)} MB`
       }
     />
   );
@@ -131,29 +127,33 @@ export function OfflineBadge() {
   );
 }
 
-export const TOOL_BUTTON =
-  "shrink-0 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 disabled:opacity-40 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30";
-
-/** One tool in the account menu: name, a line of explanation, and its button. */
-export function ToolRow({
+/** One row in the header menu: icon, label, and a short hint on the right. */
+export function MenuItem({
   icon,
+  label,
+  hint,
   title,
-  note,
-  action,
+  onClick,
+  disabled,
 }: {
   icon: React.ReactNode;
-  title: string;
-  note: string;
-  action: React.ReactNode;
+  label: string;
+  hint?: string;
+  title?: string;
+  onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 px-2 py-2.5">
-      <span className="mt-0.5 shrink-0 text-neutral-500 dark:text-neutral-400">{icon}</span>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-neutral-800 dark:text-neutral-200">{title}</p>
-        <p className="text-xs leading-snug text-neutral-500 dark:text-neutral-400">{note}</p>
-      </div>
-      {action}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-neutral-800 hover:bg-black/[0.04] disabled:cursor-default disabled:hover:bg-transparent dark:text-neutral-200 dark:hover:bg-white/[0.06]"
+    >
+      <span className="text-neutral-500 dark:text-neutral-400">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {hint ? <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">{hint}</span> : null}
+    </button>
   );
 }

@@ -2,26 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SYNC_ENABLED, signIn, signOut, startSync, useSync } from "@/lib/sync";
+import { MenuItem } from "./offline";
 import { Tools } from "./tools";
 
-function GoogleIcon() {
+function SyncIcon({ className }: { className: string }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4">
-      <path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z" />
-      <path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23z" />
-      <path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.2a11 11 0 0 0 0 9.9z" />
-      <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4z" />
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4" />
     </svg>
   );
 }
 
-const MENU_ITEM =
-  "block w-full rounded-md px-2 py-1.5 text-left font-medium text-neutral-700 hover:bg-black/[0.04] dark:text-neutral-200 dark:hover:bg-white/[0.06]";
-
 /**
- * The header's menu: your avatar when signed in (a person icon otherwise), holding sync status, the
- * occasional tools (Send to SPIEL app, Save for offline) and sign-out. Signed out, a Sign in button
- * sits beside it.
+ * The header's menu: your avatar when signed in (a person icon otherwise). Holds sign-in or your
+ * account, the occasional tools (Send to SPIEL app, Save for offline) and sign-out.
  */
 export function Account() {
   const sync = useSync();
@@ -50,18 +44,6 @@ export function Account() {
 
   return (
     <div ref={ref} className="relative flex items-center gap-2">
-      {SYNC_ENABLED && sync.ready && !user ? (
-        <button
-          type="button"
-          onClick={() => void signIn()}
-          title="Keep your marks on every device"
-          className="flex items-center gap-2 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30"
-        >
-          <GoogleIcon />
-          Sign in
-        </button>
-      ) : null}
-
       <button
         type="button"
         onClick={() => setMenu((v) => !v)}
@@ -93,34 +75,44 @@ export function Account() {
 
       {/* Hidden rather than unmounted, so a cover download carries on when the menu closes. */}
       <div
-        className={`${menu ? "" : "hidden"} absolute right-0 top-full z-20 mt-2 w-80 max-w-[calc(100vw-2.5rem)] rounded-lg border border-black/10 bg-white p-1.5 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900`}
+        className={`${menu ? "" : "hidden"} absolute right-0 top-full z-20 mt-2 w-60 rounded-lg border border-black/10 bg-white p-1.5 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900`}
       >
         {user ? (
-          <div className="border-b border-black/5 px-2 pb-2 pt-1 dark:border-white/10">
-            <p className="font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
-            {user.name ? <p className="text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
-            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              {pending
-                ? "Some changes are only on this device so far; they sync when you're back online."
-                : "Your marks sync to every device you sign in on."}
-            </p>
+          <div className="border-b border-black/5 px-2 pb-1.5 pt-0.5 dark:border-white/10">
+            <p className="truncate font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
+            {user.name ? <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
+            {pending ? (
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">Some changes not synced yet</p>
+            ) : null}
           </div>
         ) : null}
-        <Tools />
+        {SYNC_ENABLED && sync.ready && !user ? (
+          <div className="border-b border-black/5 pb-1 dark:border-white/10">
+            <MenuItem
+              icon={<SyncIcon className="h-4 w-4" />}
+              label="Sign in with Google to sync"
+              title="Keep your marks on every device"
+              onClick={() => {
+                setMenu(false);
+                void signIn();
+              }}
+            />
+          </div>
+        ) : null}
+        <div className="pt-1">
+          <Tools />
+        </div>
         {user ? (
-          <div className="border-t border-black/5 pt-1.5 dark:border-white/10">
+          <div className="border-t border-black/5 px-2 pb-0.5 pt-1.5 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
                 setMenu(false);
                 void signOut();
               }}
-              className={MENU_ITEM}
+              className="text-xs text-neutral-500 underline underline-offset-4 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               Sign out
-              <span className="block text-xs font-normal text-neutral-500 dark:text-neutral-400">
-                Your marks stay on this device
-              </span>
             </button>
           </div>
         ) : null}
