@@ -131,6 +131,7 @@ export function OfflineBadge() {
 export function MenuItem({
   icon,
   label,
+  sub,
   hint,
   title,
   onClick,
@@ -138,6 +139,8 @@ export function MenuItem({
 }: {
   icon: React.ReactNode;
   label: string;
+  /** A second, quieter line under the label. */
+  sub?: string;
   hint?: string;
   title?: string;
   onClick: () => void;
@@ -152,7 +155,10 @@ export function MenuItem({
       className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-neutral-800 hover:bg-black/[0.04] disabled:cursor-default disabled:hover:bg-transparent dark:text-neutral-200 dark:hover:bg-white/[0.06]"
     >
       <span className="text-neutral-500 dark:text-neutral-400">{icon}</span>
-      <span className="flex-1">{label}</span>
+      <span className="min-w-0 flex-1">
+        {label}
+        {sub ? <span className="block text-xs text-neutral-500 dark:text-neutral-400">{sub}</span> : null}
+      </span>
       {hint ? <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">{hint}</span> : null}
     </button>
   );
