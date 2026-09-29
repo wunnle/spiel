@@ -44,11 +44,11 @@ export function PlayFacts({ game, large }: { game: Entry; large?: boolean }) {
           title={label}
           className={
             large
-              ? "flex items-center gap-2.5 rounded-lg bg-black/[0.04] px-4 py-2.5 text-2xl font-semibold tabular-nums text-neutral-900 dark:bg-white/[0.06] dark:text-neutral-50"
+              ? "flex items-center gap-2 rounded-lg bg-black/[0.04] px-3 py-1.5 text-lg font-semibold tabular-nums text-neutral-900 dark:bg-white/[0.06] dark:text-neutral-50"
               : "flex items-center gap-1.5 tabular-nums"
           }
         >
-          <Icon className={large ? "h-6 w-6 text-neutral-500 dark:text-neutral-400" : "h-4 w-4 text-neutral-500 dark:text-neutral-400"} />
+          <Icon className={large ? "h-5 w-5 text-neutral-500 dark:text-neutral-400" : "h-4 w-4 text-neutral-500 dark:text-neutral-400"} />
           {value}
         </span>
       ))}
