@@ -203,11 +203,10 @@ export function GameList() {
   const skipped = Object.entries(marks).filter(([id, m]) => m !== "bought" && !LISTED_IDS.has(id)).length;
   const canSend = lists.interested.length + lists.wantToBuy.length > 0;
 
-  const active = [kind !== "All", buzzOnly, !!mine, !!hall].filter(Boolean).length + categories.length;
+  const active = [kind !== "All", buzzOnly, !!hall].filter(Boolean).length + categories.length;
   function clearFilters() {
     setKind("All");
     setBuzzOnly(false);
-    setMine(null);
     setHall(null);
     setCategories([]);
   }
@@ -215,29 +214,46 @@ export function GameList() {
     setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   }
 
+  // All / your three lists, as tabs over the list; "Send to SPIEL app" sits at the end of the row.
+  const tabs = (className: string) => (
+    <div className={`items-center justify-between gap-4 border-b border-black/10 dark:border-white/15 ${className}`}>
+      <div role="tablist" aria-label="Your games" className="-mb-px flex overflow-x-auto [scrollbar-width:none]">
+        {[{ id: null, label: "All", count: undefined }, ...MARKS.map((m) => ({ id: m.id, label: m.label, count: counts[m.id] }))].map(
+          (t) => (
+            <button
+              key={t.label}
+              type="button"
+              role="tab"
+              aria-selected={mine === t.id}
+              onClick={() => setMine(t.id)}
+              className={`flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2 py-2 text-sm font-medium transition-colors first:pl-0 sm:gap-1.5 sm:px-3 sm:first:pl-3 ${
+                mine === t.id
+                  ? "border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-50"
+                  : "border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+              }`}
+            >
+              {t.label}
+              {t.count ? (
+                <span className="rounded-full bg-black/[0.06] px-1 text-xs tabular-nums sm:px-1.5 dark:bg-white/[0.1]">{t.count}</span>
+              ) : null}
+            </button>
+          ),
+        )}
+      </div>
+      {canSend ? (
+        <button
+          type="button"
+          onClick={() => setTransfer(true)}
+          className="hidden shrink-0 whitespace-nowrap text-sm font-medium text-neutral-700 underline underline-offset-4 sm:block dark:text-neutral-300"
+        >
+          Send to SPIEL app
+        </button>
+      ) : null}
+    </div>
+  );
+
   const filters = (
     <div>
-      <Section
-        title="Your games"
-        action={
-          canSend ? (
-            <button
-              type="button"
-              onClick={() => setTransfer(true)}
-              className="text-xs font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
-            >
-              Send to SPIEL app
-            </button>
-          ) : null
-        }
-      >
-        {MARKS.map((m) => (
-          <Row key={m.id} active={mine === m.id} onClick={() => setMine((v) => (v === m.id ? null : m.id))} count={counts[m.id]}>
-            {m.label}
-          </Row>
-        ))}
-      </Section>
-
       <Section title="Type">
         <div className="flex flex-wrap gap-1.5">
           {KINDS.map((k) => (
@@ -290,8 +306,9 @@ export function GameList() {
 
   return (
     <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
+      {tabs("mb-4 flex lg:hidden")}
       <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
-        <div className="mb-3 flex items-center justify-between lg:hidden">
+        <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
@@ -304,7 +321,7 @@ export function GameList() {
             <button
               type="button"
               onClick={() => setTransfer(true)}
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-4 sm:hidden dark:text-neutral-300"
             >
               Send to SPIEL app
             </button>
@@ -325,6 +342,7 @@ export function GameList() {
       </aside>
 
       <section className="min-w-0">
+        {tabs("mb-4 hidden lg:flex")}
         <input
           type="search"
           value={query}
