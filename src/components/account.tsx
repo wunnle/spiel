@@ -45,7 +45,8 @@ export function Account() {
   }, [menu]);
 
   const { user, status } = sync;
-  const note = { idle: "", syncing: "Syncing…", synced: "Marks synced", error: "Will sync when back online" }[status];
+  // Synced is the normal state and says nothing; only a change still waiting to go up is worth a word.
+  const pending = status === "error";
 
   return (
     <div ref={ref} className="relative flex items-center gap-2">
@@ -83,7 +84,11 @@ export function Account() {
             </svg>
           </span>
         )}
-        {user && note ? <span className="hidden sm:inline">{note}</span> : null}
+        {user && pending ? (
+          <span className="text-xs text-amber-700 dark:text-amber-300" title="Saved on this device; syncs when you're back online">
+            Not synced yet
+          </span>
+        ) : null}
       </button>
 
       {/* Hidden rather than unmounted, so a cover download carries on when the menu closes. */}
@@ -95,7 +100,9 @@ export function Account() {
             <p className="font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
             {user.name ? <p className="text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              Your marks sync to every device you sign in on.{note ? ` ${note}.` : ""}
+              {pending
+                ? "Some changes are only on this device so far; they sync when you're back online."
+                : "Your marks sync to every device you sign in on."}
             </p>
           </div>
         ) : null}
