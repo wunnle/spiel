@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  /* Native bits (scrollbars, checkboxes, the dialog backdrop) follow the theme too. */
+  color-scheme: light dark;
   --background: #ffffff;
   --foreground: #171717;
 }

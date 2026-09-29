@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import { Account } from "@/components/account";
 import { SaveOffline, ServiceWorker } from "@/components/offline";
 import { FETCHED } from "@/lib/catalog";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -35,18 +36,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <ServiceWorker />
-        <div className="mx-auto w-full max-w-4xl px-5 pt-6 pb-12 font-sans text-neutral-800 dark:text-neutral-200">
-          <header className="mb-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <div className="mx-auto w-full max-w-6xl px-5 pt-6 pb-12 font-sans text-neutral-800 dark:text-neutral-200">
+          <header className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Link href="/" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
               {SITE_NAME}
               <span className="ml-2 text-sm font-medium text-neutral-400">SPIEL Essen · 22–25 Oct</span>
             </Link>
-            <SaveOffline />
+            <div className="flex items-center gap-4">
+              <SaveOffline />
+              <Account />
+            </div>
           </header>
 
           <main>{children}</main>
 
-          <footer className="mt-16 space-y-3 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 dark:border-white/10 dark:text-neutral-400">
+          <footer className="mt-16 max-w-3xl space-y-3 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 dark:border-white/10 dark:text-neutral-400">
             <p>
               An unofficial fan guide, not affiliated with SPIEL Essen or its organiser. Games, booths, box art
               and details come from the official novelties list, which exhibitors fill in themselves and keep

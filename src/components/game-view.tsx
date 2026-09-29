@@ -73,7 +73,7 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
     </span>
   ));
   return (
-    <article>
+    <article className="max-w-4xl">
       <Link
         href="/"
         className="text-sm font-medium text-neutral-500 underline-offset-4 hover:underline dark:text-neutral-400"

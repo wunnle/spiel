@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CATALOG, CATEGORIES, gamePath, priceEuros, type Entry } from "@/lib/catalog";
+import { byFamily, categoryDot, categoryLabel } from "@/lib/category-tones";
 import { MARKS, useMarks, type Mark } from "@/lib/marks";
 import { splitBooth } from "@/lib/site";
 import { BggScore, DemoOnly } from "./bgg";
@@ -47,6 +48,9 @@ const SORTERS: Record<Sort, (a: Entry, b: Entry) => number> = {
   // No booth sorts last; otherwise by first booth, which reads as a walking order.
   booth: (a, b) => (a.booths[0] ?? "~").localeCompare(b.booths[0] ?? "~", "en", { numeric: true }),
 };
+
+const CATEGORY_COUNTS = new Map(CATEGORIES.map((c) => [c, CATALOG.filter((g) => g.categories.includes(c)).length]));
+const CATEGORY_ORDER = [...CATEGORIES].sort(byFamily);
 
 const euros = (n: number) => n.toLocaleString("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
@@ -107,15 +111,59 @@ function BuyTotal({ games }: { games: Entry[] }) {
   );
 }
 
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="border-t border-black/5 py-4 first:border-t-0 first:pt-0 dark:border-white/10">
+      <div className="mb-2 flex items-baseline justify-between">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A full-width toggle row with a count, for the sidebar's lists. */
+function Row({
+  active,
+  onClick,
+  count,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors ${
+        active
+          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+          : "text-neutral-700 hover:bg-black/[0.04] dark:text-neutral-300 dark:hover:bg-white/[0.06]"
+      }`}
+    >
+      <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
+      {count !== undefined ? (
+        <span className={`tabular-nums ${active ? "opacity-80" : "text-neutral-400 dark:text-neutral-500"}`}>{count}</span>
+      ) : null}
+    </button>
+  );
+}
+
 export function GameList() {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<Kind>("All");
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
   const [buzzOnly, setBuzzOnly] = useState(false);
   const [mine, setMine] = useState<Mark | null>(null);
   const [hall, setHall] = useState<string | null>(null);
   const [sort, setSort] = useState<Sort>("popular");
   const [transfer, setTransfer] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const marks = useMarks();
 
   const counts = useMemo(() => {
@@ -130,7 +178,8 @@ export function GameList() {
       if (kind !== "All" && g.kind !== kind) return false;
       if (buzzOnly && !g.buzz) return false;
       if (mine && marks[g.id] !== mine) return false;
-      if (category && !g.categories.includes(category)) return false;
+      // Any of the ticked categories.
+      if (categories.length && !g.categories.some((c) => categories.includes(c))) return false;
       if (hall && !g.booths.some((b) => splitBooth(b).hall === hall)) return false;
       if (!q) return true;
       const booths = g.booths.map((b) => splitBooth(b).stand).join(" ");
@@ -139,52 +188,57 @@ export function GameList() {
       );
     });
     return matches.sort(SORTERS[sort]);
-  }, [query, kind, category, buzzOnly, mine, marks, hall, sort]);
+  }, [query, kind, categories, buzzOnly, mine, marks, hall, sort]);
 
   // Show a page at a time; any filter change starts again from the top.
-  const filterKey = [query, kind, category, buzzOnly, mine, hall, sort].join("|");
+  const filterKey = [query, kind, categories.join(","), buzzOnly, mine, hall, sort].join("|");
   const [page, setPage] = useState({ key: filterKey, count: PAGE });
   const count = page.key === filterKey ? page.count : PAGE;
 
   // What the SPIEL app can take: games still to find, and only those with an official id.
-  const transferable = useMemo(
-    () => Object.entries(marks).flatMap(([id, m]) => (m !== "bought" && LISTED_IDS.has(id) ? [id] : [])),
-    [marks],
-  );
+  const lists = useMemo(() => {
+    const of = (m: Mark) => Object.entries(marks).flatMap(([id, v]) => (v === m && LISTED_IDS.has(id) ? [id] : []));
+    return { interested: of("star"), wantToBuy: of("buy") };
+  }, [marks]);
   const skipped = Object.entries(marks).filter(([id, m]) => m !== "bought" && !LISTED_IDS.has(id)).length;
+  const canSend = lists.interested.length + lists.wantToBuy.length > 0;
 
-  return (
-    <section>
-      <div className="space-y-3">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search title, publisher, designer, booth…"
-          className="w-full rounded-lg border border-black/10 bg-transparent px-3.5 py-2.5 text-base outline-none placeholder:text-neutral-400 focus:border-black/30 dark:border-white/15 dark:focus:border-white/35"
-        />
-        <div className="flex flex-wrap gap-1.5">
-          {MARKS.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setMine((v) => (v === m.id ? null : m.id))}
-              className={chip(mine === m.id)}
-            >
-              {m.label}
-              {counts[m.id] ? ` (${counts[m.id]})` : ""}
-            </button>
-          ))}
-          {transferable.length ? (
+  const active = [kind !== "All", buzzOnly, !!mine, !!hall].filter(Boolean).length + categories.length;
+  function clearFilters() {
+    setKind("All");
+    setBuzzOnly(false);
+    setMine(null);
+    setHall(null);
+    setCategories([]);
+  }
+  function toggleCategory(c: string) {
+    setCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  }
+
+  const filters = (
+    <div>
+      <Section
+        title="Your games"
+        action={
+          canSend ? (
             <button
               type="button"
               onClick={() => setTransfer(true)}
-              className="whitespace-nowrap px-1.5 py-1 text-sm font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
+              className="text-xs font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
             >
               Send to SPIEL app
             </button>
-          ) : null}
-        </div>
+          ) : null
+        }
+      >
+        {MARKS.map((m) => (
+          <Row key={m.id} active={mine === m.id} onClick={() => setMine((v) => (v === m.id ? null : m.id))} count={counts[m.id]}>
+            {m.label}
+          </Row>
+        ))}
+      </Section>
+
+      <Section title="Type">
         <div className="flex flex-wrap gap-1.5">
           {KINDS.map((k) => (
             <button key={k} type="button" onClick={() => setKind(k)} className={chip(kind === k)}>
@@ -194,75 +248,140 @@ export function GameList() {
           <button type="button" onClick={() => setBuzzOnly((v) => !v)} className={chip(buzzOnly)}>
             Buzz
           </button>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            aria-label="Category"
-            className={`${chip(!!category)} bg-transparent`}
-          >
-            <option value="">Any category</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
         </div>
+      </Section>
+
+      <Section title="Hall">
         <div className="flex flex-wrap gap-1.5">
           <button type="button" onClick={() => setHall(null)} className={chip(hall === null)}>
-            All halls
+            All
           </button>
           {HALLS.map((h) => (
-            <button key={h} type="button" onClick={() => setHall(h)} className={chip(hall === h)}>
-              Hall {h}
+            <button key={h} type="button" onClick={() => setHall((v) => (v === h ? null : h))} className={chip(hall === h)}>
+              {h}
             </button>
           ))}
         </div>
-      </div>
+      </Section>
 
-      {mine === "buy" && shown.length ? <BuyTotal games={shown} /> : null}
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-neutral-500 dark:text-neutral-400">
-        <p>
-          {shown.length.toLocaleString("en")} of {CATALOG.length.toLocaleString("en")} games
-        </p>
-        <div className="flex gap-1">
-          {SORTS.map((s) => (
-            <button key={s.id} type="button" onClick={() => setSort(s.id)} className={chip(sort === s.id)}>
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {shown.length ? (
-        <>
-          <ul className="mt-1">
-            {shown.slice(0, count).map((g) => (
-              <GameRow key={g.id} game={g} />
-            ))}
-          </ul>
-          {shown.length > count ? (
+      <Section
+        title="Categories"
+        action={
+          categories.length ? (
             <button
               type="button"
-              onClick={() => setPage({ key: filterKey, count: count + PAGE * 2 })}
-              className="mt-6 w-full rounded-lg border border-black/10 py-2.5 font-medium text-neutral-700 hover:border-black/25 dark:border-white/15 dark:text-neutral-300 dark:hover:border-white/30"
+              onClick={() => setCategories([])}
+              className="text-xs font-medium text-neutral-500 underline underline-offset-4 dark:text-neutral-400"
             >
-              Show more ({(shown.length - count).toLocaleString("en")} left)
+              Clear
+            </button>
+          ) : null
+        }
+      >
+        {CATEGORY_ORDER.map((c) => (
+          <Row key={c} active={categories.includes(c)} onClick={() => toggleCategory(c)} count={CATEGORY_COUNTS.get(c)}>
+            <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${categoryDot(c)}`} />
+            <span className="truncate">{categoryLabel(c)}</span>
+          </Row>
+        ))}
+      </Section>
+    </div>
+  );
+
+  return (
+    <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
+      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
+        <div className="mb-3 flex items-center justify-between lg:hidden">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className={chip(filtersOpen)}
+          >
+            Filters{active ? ` (${active})` : ""}
+          </button>
+          {canSend ? (
+            <button
+              type="button"
+              onClick={() => setTransfer(true)}
+              className="text-sm font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
+            >
+              Send to SPIEL app
             </button>
           ) : null}
-        </>
-      ) : (
-        <p className="mt-6 rounded-lg bg-black/[0.03] p-4 text-neutral-500 dark:bg-white/[0.05] dark:text-neutral-400">
-          {mine && !counts[mine]
-            ? "Nothing here yet — use the buttons beside each game to mark it."
-            : "No games match those filters."}
-        </p>
-      )}
+        </div>
+        <div className={`${filtersOpen ? "mb-4 block rounded-lg border border-black/10 p-4 dark:border-white/15" : "hidden"} lg:block lg:border-0 lg:p-0`}>
+          {filters}
+          {active ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-2 text-sm font-medium text-neutral-500 underline underline-offset-4 dark:text-neutral-400"
+            >
+              Clear all filters
+            </button>
+          ) : null}
+        </div>
+      </aside>
+
+      <section className="min-w-0">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search title, publisher, designer, booth…"
+          className="w-full rounded-lg border border-black/10 bg-transparent px-3.5 py-2.5 text-base outline-none placeholder:text-neutral-400 focus:border-black/30 dark:border-white/15 dark:focus:border-white/35"
+        />
+
+        {mine === "buy" && shown.length ? <BuyTotal games={shown} /> : null}
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-neutral-500 dark:text-neutral-400">
+          <p>
+            {shown.length.toLocaleString("en")} of {CATALOG.length.toLocaleString("en")} games
+          </p>
+          <div className="flex gap-1">
+            {SORTS.map((s) => (
+              <button key={s.id} type="button" onClick={() => setSort(s.id)} className={chip(sort === s.id)}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {shown.length ? (
+          <>
+            <ul className="mt-1">
+              {shown.slice(0, count).map((g) => (
+                <GameRow key={g.id} game={g} />
+              ))}
+            </ul>
+            {shown.length > count ? (
+              <button
+                type="button"
+                onClick={() => setPage({ key: filterKey, count: count + PAGE * 2 })}
+                className="mt-6 w-full rounded-lg border border-black/10 py-2.5 font-medium text-neutral-700 hover:border-black/25 dark:border-white/15 dark:text-neutral-300 dark:hover:border-white/30"
+              >
+                Show more ({(shown.length - count).toLocaleString("en")} left)
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <p className="mt-6 rounded-lg bg-black/[0.03] p-4 text-neutral-500 dark:bg-white/[0.05] dark:text-neutral-400">
+            {mine && !counts[mine]
+              ? "Nothing here yet — use the buttons beside each game to mark it."
+              : "No games match those filters."}
+          </p>
+        )}
+      </section>
 
       {transfer ? (
-        <TransferDialog ids={transferable} skipped={skipped} onClose={() => setTransfer(false)} />
+        <TransferDialog
+          interested={lists.interested}
+          wantToBuy={lists.wantToBuy}
+          skipped={skipped}
+          onClose={() => setTransfer(false)}
+        />
       ) : null}
-    </section>
+    </div>
   );
 }
