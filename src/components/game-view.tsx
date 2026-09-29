@@ -4,6 +4,7 @@ import { BggScore, PriceLine } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
+import { PlayFacts } from "./play-facts";
 
 /** The long-form bits that only the prerendered game page carries (see src/data/details.json). */
 export type Details = {
@@ -24,17 +25,6 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
     <div className="border-t border-black/5 py-2 sm:grid sm:grid-cols-[9rem_1fr] sm:gap-4 dark:border-white/10">
       <dt className="text-sm text-neutral-500 dark:text-neutral-400">{label}</dt>
       <dd className="text-neutral-800 dark:text-neutral-200">{children}</dd>
-    </div>
-  );
-}
-
-/** Players and playing time: what decides whether a game gets to the table. */
-function Tile({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return (
-    <div className="rounded-lg bg-black/[0.04] px-4 py-2.5 dark:bg-white/[0.06]">
-      <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</div>
-      <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-50">{value}</div>
     </div>
   );
 }
@@ -125,9 +115,8 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
             <PriceLine game={game} />
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Tile label="Players" value={game.players} />
-            <Tile label="Playing time" value={game.time} />
+          <div className="mt-5">
+            <PlayFacts game={game} large />
           </div>
 
           <Booths game={game} className="mt-5 text-lg" />

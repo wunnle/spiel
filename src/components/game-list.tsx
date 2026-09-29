@@ -9,6 +9,7 @@ import { BggScore, DemoOnly } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
+import { PlayFacts } from "./play-facts";
 import { TransferDialog } from "./transfer-dialog";
 
 const PAGE = 60;
@@ -59,7 +60,6 @@ function chip(active: boolean) {
 
 /** Just what you scan the list for; the rest is on the game page. */
 function GameRow({ game }: { game: Entry }) {
-  const key = [game.players && `${game.players} players`, game.time].filter(Boolean).join(" · ");
   return (
     <li className="flex gap-4 border-b border-black/5 py-4 dark:border-white/10">
       <Link href={gamePath(game)} prefetch={false} className="block shrink-0">
@@ -78,7 +78,9 @@ function GameRow({ game }: { game: Entry }) {
             Buzz
           </span>
         ) : null}
-        {key ? <p className="mt-0.5 text-sm font-semibold text-neutral-800 dark:text-neutral-100">{key}</p> : null}
+        <div className="mt-1">
+          <PlayFacts game={game} />
+        </div>
         <Booths game={game} className="mt-0.5 text-sm" />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <BggScore game={game} />

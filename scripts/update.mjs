@@ -277,7 +277,7 @@ const catalog = products.map((p) => {
       ? bggFacts.designers.join(", ")
       : plausible.authors(fields.Author, publisher),
     players: bggFacts.players ?? plausible.players(fields["Number of players"]),
-    time: time ? `${time} min` : undefined,
+    time, // minutes, e.g. "30–120"
     age: age ? `${age}+` : undefined,
     price: price(fields["Retail price"], bggFacts.msrp),
     kind: KIND[themes.find((t) => t.startsWith("TYPE."))],
