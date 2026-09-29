@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState, useSyncExternalStore } from "react";
 import { CATALOG, CATEGORIES, MECHANICS, gamePath, priceEuros, type Entry } from "@/lib/catalog";
 import { byFamily, categoryDot, categoryLabel } from "@/lib/category-tones";
 import { MARKS, useMarks, type Mark } from "@/lib/marks";
@@ -15,16 +15,16 @@ import { PlayFacts } from "./play-facts";
 const PAGE = 60;
 
 type Kind = "New" | "Expansion";
-type Sort = "popular" | "score" | "az" | "booth";
+type Sort = "popular" | "score" | "az" | "hall";
 const KINDS: { id: Kind; label: string }[] = [
-  { id: "New", label: "New games" },
+  { id: "New", label: "New" },
   { id: "Expansion", label: "Expansions" },
 ];
 const SORTS: { id: Sort; label: string }[] = [
   { id: "popular", label: "Most wanted" },
   { id: "score", label: "BGG score" },
   { id: "az", label: "A–Z" },
-  { id: "booth", label: "Booth" },
+  { id: "hall", label: "Hall" },
 ];
 // Numbered halls in order, then the named ones ("GA" is the Galeria).
 const HALLS = [...new Set(CATALOG.flatMap((g) => g.booths.map((b) => splitBooth(b).hall)))].sort((a, b) =>
@@ -41,17 +41,46 @@ function weighted(g: Entry) {
   return (rating * ratings + 6.5 * 30) / (ratings + 30);
 }
 
-const SORTERS: Record<Sort, (a: Entry, b: Entry) => number> = {
+const SORTERS: Record<Exclude<Sort, "hall">, (a: Entry, b: Entry) => number> = {
   // Shortlist picks first, then by 👍 on BGG's preview.
   popular: (a, b) => Number(!!b.buzz) - Number(!!a.buzz) || (b.bgg?.thumbs ?? 0) - (a.bgg?.thumbs ?? 0),
   score: (a, b) => weighted(b) - weighted(a),
   az: (a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }),
-  // No booth sorts last; otherwise by first booth, which reads as a walking order.
-  booth: (a, b) => (a.booths[0] ?? "~").localeCompare(b.booths[0] ?? "~", "en", { numeric: true }),
 };
 
 const CATEGORY_COUNTS = new Map(CATEGORIES.map((c) => [c, CATALOG.filter((g) => g.categories.includes(c)).length]));
 const CATEGORY_ORDER = [...CATEGORIES].sort(byFamily);
+/** Lower case, accents off: "Gaudí" and "gaudi" match. */
+const fold = (s: string) => s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Everything search looks at, per game, folded once up front. */
+const HAYSTACK = new Map(
+  CATALOG.map((g) => [
+    g.id,
+    fold(
+      [
+        g.title,
+        g.de,
+        g.en,
+        g.publisher,
+        g.exhibitor,
+        g.at,
+        g.authors,
+        g.blurb,
+        g.kind,
+        g.level,
+        ...g.categories,
+        ...g.mechanics,
+        // "hall_3" so a search for "hall 3" means that hall, not any stand with a 3 in it.
+        ...g.booths.map((b) => `hall_${fold(splitBooth(b).hall)} ${splitBooth(b).stand}`),
+        g.search,
+      ]
+        .filter(Boolean)
+        .join(" \n "),
+    ),
+  ]),
+);
+
 const MECHANIC_COUNTS = new Map(MECHANICS.map((m) => [m, CATALOG.filter((g) => g.mechanics.includes(m)).length]));
 
 /** Adds the item if it's missing, removes it if it's there. */
@@ -118,14 +147,99 @@ function BuyTotal({ games }: { games: Entry[] }) {
   );
 }
 
-function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+// Which collapsible sections are open, remembered on this device (a convenience; fine if it's lost).
+const OPEN_KEY = "spiel26:open-sections";
+const openListeners = new Set<() => void>();
+function readOpen() {
+  try {
+    return localStorage.getItem(OPEN_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+function useSectionOpen(id: string, defaultOpen: boolean): [boolean, () => void] {
+  const raw = useSyncExternalStore(
+    (l) => {
+      openListeners.add(l);
+      return () => openListeners.delete(l);
+    },
+    readOpen,
+    () => "",
+  );
+  let saved: Record<string, boolean> = {};
+  try {
+    saved = raw ? JSON.parse(raw) : {};
+  } catch {
+    // Unreadable: fall back to the defaults.
+  }
+  const open = saved[id] ?? defaultOpen;
+  const toggleOpen = () => {
+    try {
+      localStorage.setItem(OPEN_KEY, JSON.stringify({ ...saved, [id]: !open }));
+    } catch {
+      // Storage blocked: the section just won't remember.
+    }
+    openListeners.forEach((l) => l());
+  };
+  return [open, toggleOpen];
+}
+
+function Section({
+  title,
+  action,
+  collapsible,
+  defaultOpen = true,
+  picked = 0,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  /** Long lists fold away; the header then shows how many are ticked. */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  picked?: number;
+  children: React.ReactNode;
+}) {
+  const [storedOpen, toggleOpen] = useSectionOpen(title, defaultOpen);
+  const open = !collapsible || storedOpen;
+  const heading = (
+    <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</h2>
+  );
   return (
     <section className="border-t border-black/5 py-4 first:border-t-0 first:pt-0 dark:border-white/10">
-      <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</h2>
+      <div className={`flex items-center justify-between ${open ? "mb-2" : ""}`}>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={toggleOpen}
+            aria-expanded={open}
+            className="-mx-1 flex items-center gap-1.5 rounded px-1 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden
+              className={`h-3.5 w-3.5 text-neutral-400 transition-transform ${open ? "rotate-90" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+            {heading}
+            {picked ? (
+              <span className="rounded-full bg-neutral-900 px-1.5 text-[11px] font-semibold tabular-nums text-white dark:bg-neutral-100 dark:text-neutral-900">
+                {picked}
+              </span>
+            ) : null}
+          </button>
+        ) : (
+          heading
+        )}
         {action}
       </div>
-      {children}
+      {open ? children : null}
     </section>
   );
 }
@@ -180,8 +294,14 @@ export function GameList() {
     return c;
   }, [marks]);
 
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  // The games to show, and (sorted by hall) which hall each is filed under.
+  const { shown, hallOf } = useMemo(() => {
+    const hallOf = new Map<string, string | null>();
+    // Every word has to turn up somewhere in the game.
+    const words = fold(query)
+      .replace(/\bhall\s+(\w+)/g, "hall_$1")
+      .split(/\s+/)
+      .filter(Boolean);
     const matches = CATALOG.filter((g) => {
       if (kinds.length && !(g.kind && kinds.includes(g.kind))) return false;
       if (buzzOnly && !g.buzz) return false;
@@ -190,13 +310,22 @@ export function GameList() {
       if (categories.length && !g.categories.some((c) => categories.includes(c))) return false;
       if (mechanics.length && !g.mechanics.some((m) => mechanics.includes(m))) return false;
       if (halls.length && !g.booths.some((b) => halls.includes(splitBooth(b).hall))) return false;
-      if (!q) return true;
-      const booths = g.booths.map((b) => splitBooth(b).stand).join(" ");
-      return [g.title, g.de, g.en, g.publisher, g.exhibitor, g.authors, g.blurb, booths].some((f) =>
-        f?.toLowerCase().includes(q),
-      );
+      if (!words.length) return true;
+      const hay = HAYSTACK.get(g.id)!;
+      return words.every((w) => hay.includes(w));
     });
-    return matches.sort(SORTERS[sort]);
+    if (sort !== "hall") return { shown: matches.sort(SORTERS[sort]), hallOf };
+    // By hall, then stand: a walking order. A game at several booths goes under the first one in the
+    // halls you've picked (or its first booth); games without a booth come last.
+    const where = (g: Entry) => g.booths.find((b) => !halls.length || halls.includes(splitBooth(b).hall)) ?? g.booths[0];
+    const shown = matches
+      .map((g) => ({ g, at: where(g) }))
+      .sort((a, b) => (!a.at || !b.at ? Number(!a.at) - Number(!b.at) : a.at.localeCompare(b.at, "en", { numeric: true })))
+      .map(({ g, at }) => {
+        hallOf.set(g.id, at ? splitBooth(at).hall : null);
+        return g;
+      });
+    return { shown, hallOf };
   }, [query, kinds, categories, mechanics, buzzOnly, mine, marks, halls, sort]);
 
   // Show a page at a time; any filter change starts again from the top.
@@ -284,6 +413,8 @@ export function GameList() {
 
       <Section
         title="Categories"
+        collapsible
+        picked={categories.length}
         action={
           categories.length ? (
             <button
@@ -306,6 +437,9 @@ export function GameList() {
 
       <Section
         title="Mechanisms"
+        collapsible
+        defaultOpen={false}
+        picked={mechanics.length}
         action={
           mechanics.length ? (
             <button
@@ -383,9 +517,21 @@ export function GameList() {
         {shown.length ? (
           <>
             <ul className="mt-1">
-              {shown.slice(0, count).map((g) => (
-                <GameRow key={g.id} game={g} />
-              ))}
+              {shown.slice(0, count).map((g, i, page) => {
+                // Sorted by hall: a heading wherever the hall changes.
+                const hall = sort === "hall" ? hallOf.get(g.id) : undefined;
+                const heading = sort === "hall" && (i === 0 || hallOf.get(page[i - 1].id) !== hall);
+                return (
+                  <Fragment key={g.id}>
+                    {heading ? (
+                      <li className="pt-5 text-xs font-semibold uppercase tracking-wide text-neutral-500 first:pt-2 dark:text-neutral-400">
+                        {hall ? `Hall ${hall}` : "Booth not announced yet"}
+                      </li>
+                    ) : null}
+                    <GameRow game={g} />
+                  </Fragment>
+                );
+              })}
             </ul>
             {shown.length > count ? (
               <button

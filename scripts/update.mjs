@@ -334,6 +334,18 @@ const catalog = products.map((p) => {
     level: pick("LEVEL").filter((l) => l !== "N/A")[0],
     categories: plausible.categories(pick("CATEGORIES")),
     mechanics: mechanicGroups(mechanisms),
+    // Extra words for search that the list doesn't otherwise carry; the full description stays out to
+    // keep the browser download small (the blurb covers most of it).
+    search:
+      [
+        fields.Illustrator,
+        mechanisms?.join(" "),
+        plausible.languages(list(fields.Languages))?.join(" "),
+        fields["Theme or setting"],
+        match && norm(match.name) !== norm(title) ? match.name : undefined,
+      ]
+        .filter(Boolean)
+        .join(" · ") || undefined,
     image: p.BILDER?.split("|")[0] || undefined,
     booths,
     bgg: match?.summary,

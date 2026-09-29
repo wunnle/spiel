@@ -36,6 +36,8 @@ type Listed = {
   categories: string[];
   /** Mechanism groups for filtering (both vocabularies folded together; see scripts/update.mjs). */
   mechanics: string[];
+  /** Illustrators, detailed mechanisms, languages, theme, BGG's name — words only search uses. */
+  search?: string;
   /** File name (no extension) under public/covers/{sm,lg}/. */
   cover?: string;
   /** "<hall>.<stand>", e.g. "3.3U210". */
