@@ -91,27 +91,49 @@ export function SaveOffline() {
   if (!supported || !state.total) return null;
   const { total } = state;
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
-      {!online ? (
-        <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-300">
-          Offline
-        </span>
-      ) : null}
-      {state.phase === "done" ? (
-        <span>Saved for offline ✓</span>
-      ) : state.phase === "saving" ? (
-        <span className="tabular-nums">
-          Saving covers… {state.saved.toLocaleString("en")} / {total.toLocaleString("en")}
-        </span>
-      ) : online ? (
-        <button
-          type="button"
-          onClick={save}
-          className="font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
-        >
-          Save for offline (~{Math.round((total * 14) / 1000)} MB)
-        </button>
-      ) : null}
+    <ToolRow
+      title="Save for offline"
+      note={
+        state.phase === "done"
+          ? "All covers are saved on this device ✓"
+          : state.phase === "saving"
+            ? `Saving covers… ${state.saved.toLocaleString("en")} / ${total.toLocaleString("en")}`
+            : `Downloads every cover (~${Math.round((total * 14) / 1000)} MB) so the list works with no signal in the halls. Pages you open are saved anyway.`
+      }
+      action={
+        state.phase === "idle" && online ? (
+          <button type="button" onClick={save} className={TOOL_BUTTON}>
+            Save
+          </button>
+        ) : null
+      }
+    />
+  );
+}
+
+/** Shown in the header only while there's no connection: status, not an action. */
+export function OfflineBadge() {
+  const online = useOnline();
+  if (online) return null;
+  return (
+    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-sm font-semibold text-amber-700 dark:text-amber-300">
+      Offline
+    </span>
+  );
+}
+
+export const TOOL_BUTTON =
+  "shrink-0 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 disabled:opacity-40 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30";
+
+/** One line in the footer's Tools section. */
+export function ToolRow({ title, note, action }: { title: string; note: string; action: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2">
+      <div>
+        <p className="font-medium text-neutral-800 dark:text-neutral-200">{title}</p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">{note}</p>
+      </div>
+      {action}
     </div>
   );
 }

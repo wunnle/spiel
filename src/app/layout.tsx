@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import { Account } from "@/components/account";
-import { SaveOffline, ServiceWorker } from "@/components/offline";
+import { OfflineBadge, ServiceWorker } from "@/components/offline";
+import { Tools } from "@/components/tools";
 import { FETCHED } from "@/lib/catalog";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -43,14 +44,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <span className="ml-2 text-sm font-medium text-neutral-400">SPIEL Essen · 22–25 Oct</span>
             </Link>
             <div className="flex items-center gap-4">
-              <SaveOffline />
+              <OfflineBadge />
               <Account />
             </div>
           </header>
 
           <main>{children}</main>
 
-          <footer className="mt-16 max-w-3xl space-y-3 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 dark:border-white/10 dark:text-neutral-400">
+          <footer className="mt-16 max-w-3xl space-y-6 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 dark:border-white/10 dark:text-neutral-400">
+            <Tools />
             <p>
               An unofficial fan guide, not affiliated with SPIEL Essen or its organiser. Games, booths, box art
               and details come from the official novelties list, which exhibitors fill in themselves and keep
