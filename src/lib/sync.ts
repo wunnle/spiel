@@ -61,7 +61,11 @@ let services: Promise<Services> | undefined;
 function firebase() {
   services ??= Promise.all([import("firebase/app"), import("firebase/auth"), import("firebase/firestore/lite")]).then(
     ([{ initializeApp }, { getAuth }, { getFirestore }]) => {
-      const app = initializeApp(CONFIG!);
+      // On the live site, sign-in runs through our own copy of Firebase's helper (/__/auth/, copied in
+      // by scripts/postbuild.mjs), so Google shows this domain rather than <project>.firebaseapp.com.
+      // Local development has no copy, so it keeps the default.
+      const local = ["localhost", "127.0.0.1"].includes(location.hostname);
+      const app = initializeApp({ ...CONFIG!, authDomain: local ? CONFIG!.authDomain : location.host });
       return { app, auth: getAuth(app), db: getFirestore(app) };
     },
   );

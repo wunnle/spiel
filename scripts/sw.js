@@ -78,6 +78,8 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  // Firebase's sign-in helper must always come fresh from the network.
+  if (url.pathname.includes("/__/")) return;
 
   if (url.pathname.includes("/_next/static/")) {
     event.respondWith(cacheFirst(request, STATIC));
