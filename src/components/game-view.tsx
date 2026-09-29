@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Entry } from "@/lib/catalog";
-import { categoryTone } from "@/lib/category-tones";
+import { categoryLabel, categoryTone } from "@/lib/category-tones";
 import { BggScore, PriceLine } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
@@ -87,24 +87,24 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
         <Cover game={game} size={details ? "lg" : "sm"} className="aspect-square w-full max-w-sm sm:max-w-none" />
         <div className="min-w-0">
           <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
-            {game.buzz ? <Tag tone="bg-rose-500/15 text-rose-700 dark:text-rose-300">Buzz</Tag> : null}
+            {game.buzz ? <Tag tone="bg-rose-500/10 text-rose-800/90 dark:text-rose-200/80">Buzz</Tag> : null}
             {game.kind ? (
               <Tag
                 tone={
                   game.kind === "New"
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                    : "bg-sky-500/15 text-sky-700 dark:text-sky-300"
+                    ? "bg-emerald-500/10 text-emerald-800/90 dark:text-emerald-200/80"
+                    : "bg-sky-500/10 text-sky-800/90 dark:text-sky-200/80"
                 }
               >
                 {game.kind}
               </Tag>
             ) : null}
             {game.level ? (
-              <Tag tone="bg-neutral-500/15 text-neutral-700 dark:text-neutral-300">{game.level}</Tag>
+              <Tag tone="bg-neutral-500/10 text-neutral-700 dark:text-neutral-300">{game.level}</Tag>
             ) : null}
             {game.categories.map((c) => (
               <Tag key={c} tone={categoryTone(c)}>
-                {c}
+                {categoryLabel(c)}
               </Tag>
             ))}
           </div>
