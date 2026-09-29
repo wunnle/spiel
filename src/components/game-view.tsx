@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Entry } from "@/lib/catalog";
+import { categoryTone } from "@/lib/category-tones";
 import { BggScore, PriceLine } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
@@ -101,13 +102,13 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
             {game.level ? (
               <Tag tone="bg-neutral-500/15 text-neutral-700 dark:text-neutral-300">{game.level}</Tag>
             ) : null}
+            {game.categories.map((c) => (
+              <Tag key={c} tone={categoryTone(c)}>
+                {c}
+              </Tag>
+            ))}
           </div>
-          {game.categories.length ? (
-            <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              {game.categories.join(" · ")}
-            </p>
-          ) : null}
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50">
             {game.title}
           </h1>
           {names.length ? <p className="mt-1 text-neutral-500 dark:text-neutral-400">{names.join(" · ")}</p> : null}
