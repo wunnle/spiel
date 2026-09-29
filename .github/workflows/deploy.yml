@@ -1,0 +1,67 @@
+name: deploy
+
+# Exhibitors keep editing the novelties list up to the fair, so rebuild from fresh data every morning
+# as well as on every push.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 4 * * *" # 06:00 in Essen
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # Cover files are named by the exhibitor's image id and never change, so each run only
+      # downloads the new ones.
+      - uses: actions/cache@v4
+        with:
+          path: public/covers
+          key: covers-${{ github.run_id }}
+          restore-keys: covers-
+
+      # If the official list or BGG is down, build from the committed snapshot rather than not at all.
+      - name: Fetch games and covers
+        run: npm run update || echo "::warning::update failed; building from the committed snapshot"
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
