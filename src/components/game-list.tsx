@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CATALOG, CATEGORIES, gamePath, priceEuros, type Entry } from "@/lib/catalog";
+import { CATALOG, CATEGORIES, MECHANICS, gamePath, priceEuros, type Entry } from "@/lib/catalog";
 import { byFamily, categoryDot, categoryLabel } from "@/lib/category-tones";
 import { MARKS, useMarks, type Mark } from "@/lib/marks";
 import { splitBooth } from "@/lib/site";
@@ -52,6 +52,7 @@ const SORTERS: Record<Sort, (a: Entry, b: Entry) => number> = {
 
 const CATEGORY_COUNTS = new Map(CATEGORIES.map((c) => [c, CATALOG.filter((g) => g.categories.includes(c)).length]));
 const CATEGORY_ORDER = [...CATEGORIES].sort(byFamily);
+const MECHANIC_COUNTS = new Map(MECHANICS.map((m) => [m, CATALOG.filter((g) => g.mechanics.includes(m)).length]));
 
 /** Adds the item if it's missing, removes it if it's there. */
 function toggle<T>(list: T[], item: T) {
@@ -165,6 +166,7 @@ export function GameList() {
   // Nothing ticked means no filter, like categories.
   const [kinds, setKinds] = useState<Kind[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [mechanics, setMechanics] = useState<string[]>([]);
   const [buzzOnly, setBuzzOnly] = useState(false);
   const [mine, setMine] = useState<Mark | null>(null);
   const [halls, setHalls] = useState<string[]>([]);
@@ -186,6 +188,7 @@ export function GameList() {
       if (mine && marks[g.id] !== mine) return false;
       // Any of the ticked categories.
       if (categories.length && !g.categories.some((c) => categories.includes(c))) return false;
+      if (mechanics.length && !g.mechanics.some((m) => mechanics.includes(m))) return false;
       if (halls.length && !g.booths.some((b) => halls.includes(splitBooth(b).hall))) return false;
       if (!q) return true;
       const booths = g.booths.map((b) => splitBooth(b).stand).join(" ");
@@ -194,20 +197,20 @@ export function GameList() {
       );
     });
     return matches.sort(SORTERS[sort]);
-  }, [query, kinds, categories, buzzOnly, mine, marks, halls, sort]);
+  }, [query, kinds, categories, mechanics, buzzOnly, mine, marks, halls, sort]);
 
   // Show a page at a time; any filter change starts again from the top.
-  const filterKey = [query, kinds.join(","), categories.join(","), buzzOnly, mine, halls.join(","), sort].join("|");
+  const filterKey = [query, kinds.join(","), categories.join(","), mechanics.join(","), buzzOnly, mine, halls.join(","), sort].join("|");
   const [page, setPage] = useState({ key: filterKey, count: PAGE });
   const count = page.key === filterKey ? page.count : PAGE;
 
-
-  const active = kinds.length + halls.length + categories.length + Number(buzzOnly);
+  const active = kinds.length + halls.length + categories.length + mechanics.length + Number(buzzOnly);
   function clearFilters() {
     setKinds([]);
     setBuzzOnly(false);
     setHalls([]);
     setCategories([]);
+    setMechanics([]);
   }
   function toggleCategory(c: string) {
     setCategories((prev) => toggle(prev, c));
@@ -297,6 +300,27 @@ export function GameList() {
           <Row key={c} active={categories.includes(c)} onClick={() => toggleCategory(c)} count={CATEGORY_COUNTS.get(c)}>
             <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${categoryDot(c)}`} />
             <span className="truncate">{categoryLabel(c)}</span>
+          </Row>
+        ))}
+      </Section>
+
+      <Section
+        title="Mechanisms"
+        action={
+          mechanics.length ? (
+            <button
+              type="button"
+              onClick={() => setMechanics([])}
+              className="text-xs font-medium text-neutral-500 underline underline-offset-4 dark:text-neutral-400"
+            >
+              Clear
+            </button>
+          ) : null
+        }
+      >
+        {MECHANICS.map((m) => (
+          <Row key={m} active={mechanics.includes(m)} onClick={() => setMechanics((v) => toggle(v, m))} count={MECHANIC_COUNTS.get(m)}>
+            <span className="truncate">{m}</span>
           </Row>
         ))}
       </Section>

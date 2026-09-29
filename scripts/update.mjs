@@ -234,6 +234,55 @@ const plausible = {
   categories: (list) => (list.length <= 6 ? list.filter((c) => c !== "Board Game" && c !== "Other") : []),
 };
 
+/*
+ * Mechanisms come from two vocabularies: BGG's ~180 fine-grained ones for matched games, the official
+ * form's 25 coarse ones for the rest (some misspelled). For filtering, both fold into these groups;
+ * anything unlisted (Mancala, Kill Steal…) stays on the game page but gets no filter.
+ */
+const MECHANIC_GROUPS = {
+  "Action selection": ["Action Selection", "Action Points", "Action Queue", "Action Retrieval", "Rondel", "Command Cards", "Simultaneous Action Selection"],
+  "Area control": ["Area Majority / Influence", "Area Control", "King of the Hill", "Zone of Control"],
+  "Auction & bidding": ["Auction*", "Bids As Wagers", "Constrained Bidding", "Selection Order Bid", "Predictive Bid", "Closed Economy Auction"],
+  "Campaign & story": ["Scenario / Mission / Campaign Game", "Storytelling", "Narrative Choice / Paragraph", "Legacy Game", "Campaign / Battle Card Driven", "Dungeon Crawler", "Role Playing"],
+  "Deck & bag building": ["Deck, Bag, and Pool Building", "Deck Building", "Bag Building", "Deck Construction"],
+  Deduction: ["Deduction", "Targeted Clues", "Induction"],
+  "Dice rolling": ["Dice Rolling", "Die Icon Resolution", "Re-rolling and Locking", "Dice Placement", "Worker Placement with Dice Workers"],
+  Drafting: ["Open Drafting", "Closed Drafting", "Drafting", "Action Drafting", "I Cut, You Choose"],
+  "Engine building": ["Engine Building"],
+  "Hand management": ["Hand Management"],
+  "Hidden roles & bluffing": ["Hidden Roles", "Traitor Game", "Traitor", "Betting and Bluffing", "Roles with Asymmetric Information"],
+  "Map movement": ["Area Movement", "Grid Movement", "Point to Point Movement", "Movement Points", "Track Movement", "Hexagon Grid", "Square Grid", "Roll / Spin and Move", "Hidden Movement"],
+  Memory: ["Memory"],
+  "Modular board": ["Modular Board", "Map Addition", "Multiple Maps", "Pieces as Map"],
+  "Pattern building": ["Pattern Building", "Pattern Recognition", "Matching"],
+  "Pick-up & deliver": ["Pick-up and Deliver"],
+  "Push your luck": ["Push Your Luck"],
+  "Real-time": ["Real-Time", "Speed Matching", "Elapsed Real Time Ending", "Action Timer"],
+  "Resource management": ["Ressource Management", "Resource Management", "Income", "Market", "Victory Points as a Resource", "Resource to Move", "Resource Queue", "Loans", "Investment"],
+  "Roll & write": ["Paper-and-Pencil", "Roll'n'Write", "Flip'n'Write"],
+  "Route building": ["Network and Route Building", "Connections", "Line Drawing"],
+  "Set collection": ["Set Collection"],
+  "Take that": ["Take That", "Player Elimination"],
+  "Team play": ["Team-Based Game"],
+  "Tile placement": ["Tile Placement", "Grid Coverage"],
+  "Trading & negotiation": ["Trading", "Trade", "Negotiation", "Bribery", "Alliances"],
+  "Trick-taking & climbing": ["Trick-taking", "Trick taking", "Ladder Climbing"],
+  "Variable player powers": ["Variable Player Powers"],
+  "Worker placement": ["Worker Placement*"],
+};
+const mechanicGroup = (() => {
+  const exact = new Map();
+  const prefixes = [];
+  for (const [group, names] of Object.entries(MECHANIC_GROUPS)) {
+    for (const n of names) {
+      if (n.endsWith("*")) prefixes.push([n.slice(0, -1).toLowerCase(), group]);
+      else exact.set(n.toLowerCase(), group);
+    }
+  }
+  return (name) => exact.get(name.toLowerCase()) ?? prefixes.find(([p]) => name.toLowerCase().startsWith(p))?.[1];
+})();
+const mechanicGroups = (list) => [...new Set((list ?? []).map(mechanicGroup).filter(Boolean))].sort();
+
 /** "49.99 €"; a price a hundred times BGG's (1499 for 14.99) was a missing decimal point. */
 function price(raw, msrp) {
   const value = Number((raw ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
@@ -257,11 +306,12 @@ const catalog = products.map((p) => {
   const publisher = fields.Publisher || p.UNTERTITEL || undefined;
   const age = bggFacts.age ?? plausible.age(fields["Playing Age"]);
   const time = bggFacts.time ?? plausible.time(fields["Playing time"]);
+  const mechanisms = bggFacts.mechanisms?.length ? bggFacts.mechanisms : plausible.mechanisms(list(fields.Mechanisms));
   details[p.ID] = {
     description: paragraphs,
     illustrators: fields.Illustrator,
     release: /^\d{2}\/\d{4}$/.test(fields["Release date"] ?? "") ? fields["Release date"] : undefined,
-    mechanisms: bggFacts.mechanisms?.length ? bggFacts.mechanisms : plausible.mechanisms(list(fields.Mechanisms)),
+    mechanisms,
     languages: plausible.languages(list(fields.Languages)),
     bggName: match && norm(match.name) !== norm(title) ? match.name : undefined,
     expands: match?.expands.length ? match.expands : undefined,
@@ -283,6 +333,7 @@ const catalog = products.map((p) => {
     kind: KIND[themes.find((t) => t.startsWith("TYPE."))],
     level: pick("LEVEL").filter((l) => l !== "N/A")[0],
     categories: plausible.categories(pick("CATEGORIES")),
+    mechanics: mechanicGroups(mechanisms),
     image: p.BILDER?.split("|")[0] || undefined,
     booths,
     bgg: match?.summary,
