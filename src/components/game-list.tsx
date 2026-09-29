@@ -58,7 +58,8 @@ function chip(active: boolean) {
 }
 
 function GameRow({ game }: { game: Entry }) {
-  const facts = [game.players && `${game.players} players`, game.time, game.age, game.price].filter(Boolean).join(" · ");
+  const key = [game.players && `${game.players} players`, game.time].filter(Boolean).join(" · ");
+  const rest = [game.age, game.price].filter(Boolean).join(" · ");
   return (
     <li className="grid grid-cols-[auto_1fr_auto] gap-x-4 border-b border-black/5 py-5 sm:grid-rows-[auto_1fr] dark:border-white/10">
       <Link href={gamePath(game)} prefetch={false} className="block sm:row-span-2">
@@ -76,7 +77,13 @@ function GameRow({ game }: { game: Entry }) {
           {game.en ? <span className="text-sm text-neutral-500 dark:text-neutral-400">{game.en}</span> : null}
         </div>
         {game.publisher ? <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{game.publisher}</p> : null}
-        {facts ? <p className="text-sm text-neutral-500 dark:text-neutral-400">{facts}</p> : null}
+        {key || rest ? (
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {key ? <span className="font-semibold text-neutral-800 dark:text-neutral-100">{key}</span> : null}
+            {key && rest ? " · " : null}
+            {rest}
+          </p>
+        ) : null}
         <Booths game={game} className="mt-1 text-sm" />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <BggScore game={game} />

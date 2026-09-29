@@ -10,7 +10,6 @@ export type Details = {
   description: string[];
   illustrators?: string;
   release?: string;
-  theme?: string;
   mechanisms?: string[];
   languages?: string[];
   /** BGG's name for the game, when it differs from the listing's. */
@@ -25,6 +24,40 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
     <div className="border-t border-black/5 py-2 sm:grid sm:grid-cols-[9rem_1fr] sm:gap-4 dark:border-white/10">
       <dt className="text-sm text-neutral-500 dark:text-neutral-400">{label}</dt>
       <dd className="text-neutral-800 dark:text-neutral-200">{children}</dd>
+    </div>
+  );
+}
+
+/** Players and playing time: what decides whether a game gets to the table. */
+function Tile({ label, value, small }: { label: string; value?: string; small?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className="rounded-lg bg-black/[0.04] px-4 py-2.5 dark:bg-white/[0.06]">
+      <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{label}</div>
+      <div
+        className={`font-semibold tabular-nums text-neutral-900 dark:text-neutral-50 ${small ? "text-lg" : "text-2xl"}`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function Chips({ label, items }: { label: string; items?: string[] }) {
+  if (!items?.length) return null;
+  return (
+    <div>
+      <h2 className="text-sm text-neutral-500 dark:text-neutral-400">{label}</h2>
+      <ul className="mt-1.5 flex flex-wrap gap-1.5">
+        {items.map((i) => (
+          <li
+            key={i}
+            className="rounded-md border border-black/10 px-2 py-0.5 text-sm text-neutral-700 dark:border-white/15 dark:text-neutral-300"
+          >
+            {i}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -96,6 +129,12 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
             <PriceLine game={game} />
           </div>
 
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Tile label="Players" value={game.players} />
+            <Tile label="Playing time" value={game.time} />
+            <Tile label="Age" value={game.age} small />
+          </div>
+
           <Booths game={game} className="mt-5 text-lg" />
 
           <div className="mt-5">
@@ -104,19 +143,17 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
         </div>
       </div>
 
-      <dl className="mt-10 max-w-2xl">
-        <Fact label="Players">{game.players}</Fact>
-        <Fact label="Playing time">{game.time}</Fact>
-        <Fact label="Age">{game.age}</Fact>
-        <Fact label="Release">{details?.release}</Fact>
+      <div className="mt-10 max-w-2xl space-y-4">
+        <Chips label="Categories" items={game.categories} />
+        <Chips label="Mechanisms" items={details?.mechanisms} />
+      </div>
+
+      <dl className="mt-8 max-w-2xl">
         <Fact label="Designers">{game.authors}</Fact>
-        <Fact label="Illustrators">{details?.illustrators}</Fact>
-        <Fact label="Shown by">{game.exhibitor !== game.publisher ? game.exhibitor : undefined}</Fact>
-        <Fact label="Expansion for">{expands?.length ? expands : undefined}</Fact>
-        <Fact label="Categories">{game.categories.join(", ")}</Fact>
-        <Fact label="Mechanisms">{details?.mechanisms?.join(", ")}</Fact>
-        <Fact label="Theme">{details?.theme}</Fact>
         <Fact label="Languages">{details?.languages?.join(", ")}</Fact>
+        <Fact label="Expansion for">{expands?.length ? expands : undefined}</Fact>
+        <Fact label="Illustrators">{details?.illustrators}</Fact>
+        <Fact label="Release">{details?.release}</Fact>
       </dl>
 
       {description.length ? (

@@ -126,6 +126,8 @@ const CURRENCY = { EUR: "€", USD: "$", GBP: "£" };
 const money = (amount, currency) =>
   amount > 0 ? `${CURRENCY[currency] ?? `${currency} `}${Number.isInteger(amount) ? amount : amount.toFixed(2)}` : undefined;
 const num = (v) => Number(v ?? 0) || 0;
+/** 2, 4 → "2–4"; 2, 2 → "2"; nothing → undefined. */
+const span = (min, max) => (min ? (max > min ? `${min}–${max}` : `${min}`) : undefined);
 
 /** Early ratings come from playtesters and preview copies; below this many they're noise. */
 const MIN_RATINGS = 5;
@@ -151,6 +153,15 @@ const bgg = preview.map((p) => {
     },
     // What only the game page shows.
     expands: (item.links?.expandsboardgame ?? []).map((l) => ({ id: Number(l.objectid), name: l.name })),
+    // BGG's community-kept facts, preferred over what exhibitors typed into the official form.
+    facts: {
+      players: span(num(item.minplayers), num(item.maxplayers)),
+      time: span(num(item.minplaytime), num(item.maxplaytime)),
+      age: num(item.minage) || undefined,
+      designers: (item.links?.boardgamedesigner ?? []).map((l) => l.name).filter((n) => n !== "(Uncredited)"),
+      mechanisms: (item.links?.boardgamemechanic ?? []).map((l) => l.name),
+      msrp: p.msrp_currency === "EUR" && p.msrp > 0 ? p.msrp : undefined,
+    },
   };
 });
 const bggByName = Map.groupBy(bgg, (b) => b.key);
@@ -192,7 +203,44 @@ const slugify = (s) =>
     .slice(0, 80) || "game";
 
 const KIND = { "TYPE.1": "New", "TYPE.2": "Expansion" };
-const range = (s) => s?.replace(/\s*-\s*/, "–");
+
+/*
+ * The official form is filled in by exhibitors and it shows: ages of 0+ or 70+, playing times of a
+ * minute or 999999999, every language ticked, the publisher entered as the designer, "Board Game" as a
+ * category. For games matched on BGG its values win; the rest pass through these sanity checks, and
+ * anything implausible is left out rather than shown.
+ */
+const plausible = {
+  players: (s) => {
+    const [min, max = min] = (s ?? "").split(/\s*-\s*/).map(Number);
+    return min >= 1 && max >= min && max <= 30 ? span(min, max) : undefined;
+  },
+  time: (s) => {
+    const [min, max = min] = (s ?? "").replace(/minutes?/, "").split(/\s*-\s*/).map(Number);
+    return min >= 5 && max >= min && max <= 480 ? span(min, max) : undefined;
+  },
+  age: (s) => {
+    const age = parseInt(s ?? "", 10);
+    return age >= 2 && age <= 21 ? age : undefined;
+  },
+  // A company name in the designer field.
+  authors: (s, publisher) =>
+    s && !/\b(verlag|gmbh|games|spiele|edition|studio|publishing|ltd|inc|kg)\b/i.test(s) && norm(s) !== norm(publisher ?? "")
+      ? s
+      : undefined,
+  // Every box ticked says nothing.
+  languages: (list) => (list && list.length <= 6 ? list.filter((l) => l !== "Other") : undefined),
+  mechanisms: (list) => (list && list.length <= 6 ? list.filter((m) => m !== "Others") : undefined),
+  categories: (list) => (list.length <= 6 ? list.filter((c) => c !== "Board Game" && c !== "Other") : []),
+};
+
+/** "49.99 €"; a price a hundred times BGG's (1499 for 14.99) was a missing decimal point. */
+function price(raw, msrp) {
+  const value = Number((raw ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
+  if (!(value >= 1)) return msrp ? `${msrp} €` : undefined;
+  if (msrp && value / msrp > 20) return `${msrp} €`;
+  return `${Number.isInteger(value) ? value : value.toFixed(2)} €`;
+}
 
 const details = {};
 const catalog = products.map((p) => {
@@ -202,16 +250,19 @@ const catalog = products.map((p) => {
   const exhibitor = exhibitorById.get(p.FIRMA_ID);
   const booths = (exhibitor?.STAENDE ?? []).map((s) => s.ID);
   const match = matchBgg(title, booths.map((b) => b.split(".")[1]));
+  const bggFacts = match?.facts ?? {};
   const themes = p.THEMEN ?? [];
   const pick = (root) => themes.filter((t) => t.startsWith(`${root}.`)).map((t) => themeTitle.get(t)).filter(Boolean);
   const list = (s) => s?.split("\n").map((x) => x.trim()).filter(Boolean);
+  const publisher = fields.Publisher || p.UNTERTITEL || undefined;
+  const age = bggFacts.age ?? plausible.age(fields["Playing Age"]);
+  const time = bggFacts.time ?? plausible.time(fields["Playing time"]);
   details[p.ID] = {
     description: paragraphs,
     illustrators: fields.Illustrator,
-    release: fields["Release date"],
-    theme: fields["Theme or setting"],
-    mechanisms: list(fields.Mechanisms),
-    languages: list(fields.Languages),
+    release: /^\d{2}\/\d{4}$/.test(fields["Release date"] ?? "") ? fields["Release date"] : undefined,
+    mechanisms: bggFacts.mechanisms?.length ? bggFacts.mechanisms : plausible.mechanisms(list(fields.Mechanisms)),
+    languages: plausible.languages(list(fields.Languages)),
     bggName: match && norm(match.name) !== norm(title) ? match.name : undefined,
     expands: match?.expands.length ? match.expands : undefined,
   };
@@ -220,16 +271,18 @@ const catalog = products.map((p) => {
     slug: slugify(title),
     title,
     de: de && norm(de) !== norm(title) ? de : undefined,
-    publisher: fields.Publisher || p.UNTERTITEL || undefined,
+    publisher,
     exhibitor: exhibitor?.NAME,
-    authors: fields.Author,
-    players: range(fields["Number of players"]),
-    time: fields["Playing time"]?.startsWith("999") ? undefined : range(fields["Playing time"])?.replace(" minutes", " min"),
-    age: fields["Playing Age"]?.replace(" and up", "+"),
-    price: /\d/.test(fields["Retail price"] ?? "") ? fields["Retail price"].replace(/\s*€/, " €") : undefined,
+    authors: bggFacts.designers?.length
+      ? bggFacts.designers.join(", ")
+      : plausible.authors(fields.Author, publisher),
+    players: bggFacts.players ?? plausible.players(fields["Number of players"]),
+    time: time ? `${time} min` : undefined,
+    age: age ? `${age}+` : undefined,
+    price: price(fields["Retail price"], bggFacts.msrp),
     kind: KIND[themes.find((t) => t.startsWith("TYPE."))],
     level: pick("LEVEL").filter((l) => l !== "N/A")[0],
-    categories: pick("CATEGORIES"),
+    categories: plausible.categories(pick("CATEGORIES")),
     image: p.BILDER?.split("|")[0] || undefined,
     booths,
     bgg: match?.summary,
