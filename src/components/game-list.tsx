@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CATALOG, CATEGORIES, bggUrl, gamePath, priceEuros, type Entry } from "@/lib/catalog";
+import { CATALOG, CATEGORIES, gamePath, priceEuros, type Entry } from "@/lib/catalog";
 import { MARKS, useMarks, type Mark } from "@/lib/marks";
 import { splitBooth } from "@/lib/site";
+import { BggScore, DemoOnly } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
@@ -13,10 +14,11 @@ import { TransferDialog } from "./transfer-dialog";
 const PAGE = 60;
 
 type Kind = "All" | "New" | "Expansion";
-type Sort = "popular" | "az" | "booth";
+type Sort = "popular" | "score" | "az" | "booth";
 const KINDS: Kind[] = ["All", "New", "Expansion"];
 const SORTS: { id: Sort; label: string }[] = [
   { id: "popular", label: "Most wanted" },
+  { id: "score", label: "BGG score" },
   { id: "az", label: "A–Z" },
   { id: "booth", label: "Booth" },
 ];
@@ -26,9 +28,20 @@ const HALLS = [...new Set(CATALOG.flatMap((g) => g.booths.map((b) => splitBooth(
   a.localeCompare(b, "en", { numeric: true }),
 );
 
+/**
+ * Score for sorting: the BGG average pulled toward a typical 6.5 until ~30 ratings back it up, so a
+ * 10.0 from five playtesters doesn't outrank an 8.5 from hundreds. Unscored games sort last.
+ */
+function weighted(g: Entry) {
+  const { rating, ratings = 0 } = g.bgg ?? {};
+  if (!rating) return 0;
+  return (rating * ratings + 6.5 * 30) / (ratings + 30);
+}
+
 const SORTERS: Record<Sort, (a: Entry, b: Entry) => number> = {
   // Shortlist picks first, then by 👍 on BGG's preview.
-  popular: (a, b) => Number(!!b.buzz) - Number(!!a.buzz) || (b.thumbs ?? 0) - (a.thumbs ?? 0),
+  popular: (a, b) => Number(!!b.buzz) - Number(!!a.buzz) || (b.bgg?.thumbs ?? 0) - (a.bgg?.thumbs ?? 0),
+  score: (a, b) => weighted(b) - weighted(a),
   az: (a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }),
   // No booth sorts last; otherwise by first booth, which reads as a walking order.
   booth: (a, b) => (a.booths[0] ?? "~").localeCompare(b.booths[0] ?? "~", "en", { numeric: true }),
@@ -65,6 +78,10 @@ function GameRow({ game }: { game: Entry }) {
         {game.publisher ? <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">{game.publisher}</p> : null}
         {facts ? <p className="text-sm text-neutral-500 dark:text-neutral-400">{facts}</p> : null}
         <Booths game={game} className="mt-1 text-sm" />
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+          <BggScore game={game} />
+          {game.bgg?.demoOnly ? <DemoOnly /> : null}
+        </div>
       </div>
       <div className="-mr-1 -mt-1 sm:row-span-2">
         <MarkControl id={game.id} title={game.title} compact />
@@ -93,14 +110,6 @@ function GameRow({ game }: { game: Entry }) {
               {c}
             </span>
           ))}
-          <a
-            href={bggUrl(game)}
-            target="_blank"
-            rel="noreferrer"
-            className="ml-1 font-medium text-neutral-500 underline-offset-4 hover:underline dark:text-neutral-400"
-          >
-            {game.bgg ? `BGG${game.thumbs ? ` · ${game.thumbs} 👍` : ""} ↗` : "Search BGG ↗"}
-          </a>
         </div>
       </div>
     </li>

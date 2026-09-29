@@ -122,15 +122,35 @@ const themeTitle = new Map(productThemes.map((t) => [t.ID, t.TITEL]));
 const germanTitle = new Map(german.map((p) => [p.ID, decode(p.TITEL).trim()]));
 const exhibitorById = new Map(exhibitors.map((e) => [e.ID, e]));
 
+const CURRENCY = { EUR: "€", USD: "$", GBP: "£" };
+const money = (amount, currency) =>
+  amount > 0 ? `${CURRENCY[currency] ?? `${currency} `}${Number.isInteger(amount) ? amount : amount.toFixed(2)}` : undefined;
+const num = (v) => Number(v ?? 0) || 0;
+
+/** Early ratings come from playtesters and preview copies; below this many they're noise. */
+const MIN_RATINGS = 5;
+
 const bgg = preview.map((p) => {
   const item = p.geekitem.item;
+  const info = item.dynamicinfo?.item ?? {};
+  const stats = info.stats ?? {};
   return {
     id: Number(p.objectid),
     name: item.primaryname.name,
     key: norm(item.primaryname.name),
     stands: bggStands(p.location),
-    thumbs: p.reactions?.thumbs ?? 0,
     short: item.short_description || undefined,
+    // What the list shows.
+    summary: {
+      id: Number(p.objectid),
+      thumbs: p.reactions?.thumbs || undefined,
+      rating: num(stats.usersrated) >= MIN_RATINGS ? Math.round(num(stats.average) * 10) / 10 : undefined,
+      ratings: num(stats.usersrated) >= MIN_RATINGS ? num(stats.usersrated) : undefined,
+      demoOnly: p.availability_status === "demo" || undefined,
+      showPrice: money(p.showprice, p.showprice_currency),
+    },
+    // What only the game page shows.
+    expands: (item.links?.expandsboardgame ?? []).map((l) => ({ id: Number(l.objectid), name: l.name })),
   };
 });
 const bggByName = Map.groupBy(bgg, (b) => b.key);
@@ -193,6 +213,7 @@ const catalog = products.map((p) => {
     mechanisms: list(fields.Mechanisms),
     languages: list(fields.Languages),
     bggName: match && norm(match.name) !== norm(title) ? match.name : undefined,
+    expands: match?.expands.length ? match.expands : undefined,
   };
   return {
     id: p.ID,
@@ -211,8 +232,7 @@ const catalog = products.map((p) => {
     categories: pick("CATEGORIES"),
     image: p.BILDER?.split("|")[0] || undefined,
     booths,
-    bgg: match?.id,
-    thumbs: match?.thumbs || undefined,
+    bgg: match?.summary,
     blurb: match?.short ?? clip(body, 260),
   };
 });
@@ -264,6 +284,7 @@ writeFileSync(new URL("catalog.json", DATA), JSON.stringify({ fetched, games: ca
 writeFileSync(new URL("details.json", DATA), JSON.stringify(details));
 const count = (f) => catalog.filter(f).length;
 console.log(
-  `${catalog.length} games from ${exhibitors.length} exhibitors: ${count((g) => g.bgg)} with a BGG page, ` +
+  `${catalog.length} games from ${exhibitors.length} exhibitors: ${count((g) => g.bgg)} with a BGG page ` +
+    `(${count((g) => g.bgg?.rating)} with a score, ${count((g) => g.bgg?.demoOnly)} demo only), ` +
     `${count((g) => g.cover)} with a cover`,
 );

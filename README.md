@@ -12,8 +12,10 @@ hand-off of your list to the official SPIEL app — and it works offline in the 
   [spiel-essen.de/en/the-spiel/novelties](https://www.spiel-essen.de/en/the-spiel/novelties) read
   (`maps.eyeled-services.de/{en,de}/spiel26/products` and `/exhibitors`). Undocumented; be gentle.
 - **BGG's [SPIEL ’26 preview](https://boardgamegeek.com/geekpreview/93/spiel-essen-2026)**
-  (`api.geekdo.com/api/geekpreviewitems?previewid=93`), matched by name and booth, for direct BGG links
-  and thumbs-up counts. Games without a confident match link to a BGG search instead.
+  (`api.geekdo.com/api/geekpreviewitems?previewid=93`), matched by name and booth, for direct BGG links,
+  the BGG score (shown from 5 ratings up; the "BGG score" sort weights it by vote count), thumbs-up
+  counts, the price at the fair, and whether a game is only demoed. Games without a confident match link
+  to a BGG search instead.
 - **Box art**, resized to webp in `public/covers/{sm,lg}/` (gitignored; ~85 MB).
 
 It writes `src/data/catalog.json` (list data, shipped to the browser) and `src/data/details.json` (full

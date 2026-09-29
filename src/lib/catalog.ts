@@ -2,6 +2,20 @@ import data from "@/data/catalog.json";
 import { PICKS, type Pick } from "@/data/picks";
 import { BASE } from "./site";
 
+/** BoardGameGeek's side of a game, from its SPIEL preview. */
+export type BggSummary = {
+  id: number;
+  /** 👍 on the preview; "Most wanted" sorts by it. */
+  thumbs?: number;
+  /** Average user rating, 1–10 — only with enough votes. Early ratings come from preview copies. */
+  rating?: number;
+  ratings?: number;
+  /** Only demoed at the fair, not sold there. */
+  demoOnly?: boolean;
+  /** Price at the fair, in the publisher's currency, e.g. "€60". */
+  showPrice?: string;
+};
+
 /** One game from the official novelties list, as scripts/update.mjs writes it. */
 type Listed = {
   /** Product id in the official list — what the SPIEL app's favourites import expects. */
@@ -24,9 +38,7 @@ type Listed = {
   cover?: string;
   /** "<hall>.<stand>", e.g. "3.3U210". */
   booths: string[];
-  bgg?: number;
-  /** 👍 on BGG's SPIEL preview. */
-  thumbs?: number;
+  bgg?: BggSummary;
   blurb?: string;
 };
 
@@ -128,7 +140,7 @@ export function gamePath(g: Entry) {
 }
 
 export function bggUrl(g: Entry) {
-  if (g.bgg) return `https://boardgamegeek.com/boardgame/${g.bgg}`;
+  if (g.bgg) return `https://boardgamegeek.com/boardgame/${g.bgg.id}`;
   const q = encodeURIComponent(g.en ?? g.title);
   return `https://boardgamegeek.com/geeksearch.php?action=search&objecttype=boardgame&q=${q}`;
 }
