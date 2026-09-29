@@ -1,5 +1,8 @@
 import { bggUrl, type Entry } from "@/lib/catalog";
 
+/** 8.5 stays 8.5; a whole number drops the ".0" — 10, not 10.0. */
+const score = (r: number) => (Number.isInteger(r) ? String(r) : r.toFixed(1));
+
 /** BGG-style colour by score: the greener, the better liked. */
 function tone(r: number) {
   if (r >= 8) return "bg-emerald-600 text-white";
@@ -29,7 +32,7 @@ export function BggScore({ game, large }: { game: Entry; large?: boolean }) {
             large ? "h-14 w-14 text-2xl" : "h-7 w-10 text-sm"
           }`}
         >
-          {b.rating.toFixed(1)}
+          {score(b.rating)}
         </span>
       ) : null}
       <span className={`flex flex-col leading-tight ${large ? "" : "text-xs"}`}>
