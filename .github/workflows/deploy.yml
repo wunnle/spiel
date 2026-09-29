@@ -51,10 +51,10 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
-          # Sign-in and synced marks; unset, the site builds without them. Repo → Settings → Secrets and
-          # variables → Actions → Variables. Both are public by design (the table is locked down by RLS).
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          # Sign-in and synced marks; unset, the site builds without them. The Firebase web config as
+          # JSON, in repo → Settings → Secrets and variables → Actions → Variables. Public by design:
+          # firestore.rules is what keeps each person's marks to themselves.
+          NEXT_PUBLIC_FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

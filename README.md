@@ -38,24 +38,22 @@ into `out/sw.js`.
 ## Sign-in and synced marks
 
 Marks live on the device (localStorage) and work signed out and offline. Signing in with Google mirrors
-them to a Supabase table so they follow you between devices; `src/lib/sync.ts` merges per game, newest
-change wins. Without the two Supabase variables the sign-in button simply doesn't appear.
+them to Firestore (`users/{uid}/marks/{game id}`) so they follow you between devices; `src/lib/sync.ts`
+merges per game, newest change wins. Without the Firebase config the sign-in button simply doesn't
+appear.
 
-One-time setup:
+One-time setup, in the [Firebase console](https://console.firebase.google.com):
 
-1. Create a project at [supabase.com](https://supabase.com). In **SQL Editor**, run `supabase/schema.sql`.
-2. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client
-   ID** (Web application). Authorised redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
-   (Supabase shows the exact one under Authentication → Sign In / Providers → Google).
-3. In Supabase, **Authentication → Sign In / Providers → Google**: enable it and paste the client ID and
-   secret.
-4. **Authentication → URL Configuration**: Site URL `https://spiel.kafagoz.com`; Redirect URLs
-   `https://spiel.kafagoz.com/**` (and `http://localhost:3000/**` for development).
-5. In this repo, **Settings → Secrets and variables → Actions → Variables**, add `SUPABASE_URL` and
-   `SUPABASE_ANON_KEY` from Supabase's **Project Settings → API**. Re-run the deploy workflow.
+1. Add a project and register a **web app**.
+2. **Authentication → Sign-in method**: enable **Google**. **Authentication → Settings → Authorized
+   domains**: add `spiel.kafagoz.com`.
+3. **Firestore Database → Create database** (production mode, an EU location). **Rules**: paste
+   `firestore.rules` and publish.
+4. **Project settings → Your apps**: copy the config object and save it as JSON in this repo's
+   **Settings → Secrets and variables → Actions → Variables** as `FIREBASE_CONFIG`, e.g.
+   `{"apiKey":"…","authDomain":"….firebaseapp.com","projectId":"…","appId":"…"}`. Re-run the deploy.
 
-For local development put the same two values in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+For local development put the same JSON in `.env.local` as `NEXT_PUBLIC_FIREBASE_CONFIG`.
 
 ## Develop
 

@@ -1,23 +1,36 @@
 "use client";
 
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth, User } from "firebase/auth";
+import type { Firestore } from "firebase/firestore/lite";
 import { useSyncExternalStore } from "react";
 import { mergeMarks, onMarkChange, type Mark, type Stamped } from "./marks";
 
-// Signing in with Google mirrors your marks to a Supabase table (supabase/schema.sql), so they follow
-// you between phone and laptop. The device stays the source of truth: marks work offline and signed
-// out, and sync whenever there's a session and a connection — newest change per game wins.
+// Signing in with Google mirrors your marks to Firestore (users/{uid}/marks/{game id}; rules in
+// firestore.rules), so they follow you between phone and laptop. The device stays the source of
+// truth: marks work offline and signed out, and sync whenever there's a user and a connection —
+// newest change per game wins.
 //
-// Without NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY at build time there's no sign-in at all.
+// NEXT_PUBLIC_FIREBASE_CONFIG is the web app's config object as JSON (Firebase console → Project
+// settings → Your apps). Without it there's no sign-in at all.
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-export const SYNC_ENABLED = !!(URL && ANON_KEY);
+type Config = { apiKey: string; authDomain: string; projectId: string; appId: string };
 
-type Row = { user_id: string; game_id: string; mark: Mark | null; updated_at: string };
+function readConfig(): Config | undefined {
+  try {
+    const c = JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG ?? "");
+    return c?.apiKey && c?.projectId ? c : undefined;
+  } catch {
+    return undefined;
+  }
+}
+const CONFIG = readConfig();
+export const SYNC_ENABLED = !!CONFIG;
+
+type Doc = { mark: Mark | null; at: number };
 
 export type SyncState = {
-  /** false until the stored session (if any) has been read. */
+  /** false until the stored sign-in (if any) has been read. */
   ready: boolean;
   user?: { email?: string; name?: string; avatar?: string };
   status: "idle" | "syncing" | "synced" | "error";
@@ -41,40 +54,47 @@ export function useSync() {
   );
 }
 
-// The client library is loaded only when sync is configured, and only in the browser.
-let client: Promise<SupabaseClient> | undefined;
-function supabase() {
-  client ??= import("@supabase/supabase-js").then(({ createClient }) =>
-    createClient(URL!, ANON_KEY!, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true } }),
+// Firebase loads only when sync is configured, and only in the browser. Firestore Lite: plain reads
+// and writes, a fraction of the full SDK — local storage already covers offline.
+type Services = { app: FirebaseApp; auth: Auth; db: Firestore };
+let services: Promise<Services> | undefined;
+function firebase() {
+  services ??= Promise.all([import("firebase/app"), import("firebase/auth"), import("firebase/firestore/lite")]).then(
+    ([{ initializeApp }, { getAuth }, { getFirestore }]) => {
+      const app = initializeApp(CONFIG!);
+      return { app, auth: getAuth(app), db: getFirestore(app) };
+    },
   );
-  return client;
+  return services;
 }
 
-let session: Session | null = null;
+let user: User | null = null;
 
-const toRow = (userId: string, id: string, e: Stamped): Row => ({
-  user_id: userId,
-  game_id: id,
-  mark: e.mark,
-  updated_at: new Date(e.at).toISOString(),
-});
+// Game ids can hold characters Firestore doesn't allow in a document id ("pick:<title>").
+const docId = (id: string) => encodeURIComponent(id);
 
 /** Pulls everything, keeps the newest side of each game, and pushes back what the device had newer. */
 async function syncAll() {
-  if (!session || !navigator.onLine) return;
+  if (!user || !navigator.onLine) return;
+  const uid = user.uid;
   set({ status: "syncing" });
   try {
-    const db = await supabase();
-    const { data, error } = await db.from("marks").select("game_id, mark, updated_at");
-    if (error) throw error;
+    const { db } = await firebase();
+    const { collection, getDocs, writeBatch, doc } = await import("firebase/firestore/lite");
+    const snap = await getDocs(collection(db, "users", uid, "marks"));
     const remote: Record<string, Stamped> = {};
-    for (const r of data as Row[]) remote[r.game_id] = { mark: r.mark, at: Date.parse(r.updated_at) };
+    snap.forEach((d) => {
+      const { mark, at } = d.data() as Doc;
+      remote[decodeURIComponent(d.id)] = { mark, at };
+    });
     const newer = mergeMarks(remote);
-    if (newer.length) {
-      const { error: pushError } = await db
-        .from("marks")
-        .upsert(newer.map(([id, e]) => toRow(session!.user.id, id, e)), { onConflict: "user_id,game_id" });
-      if (pushError) throw pushError;
+    // A batch takes up to 500 writes.
+    for (let i = 0; i < newer.length; i += 500) {
+      const batch = writeBatch(db);
+      for (const [id, e] of newer.slice(i, i + 500)) {
+        batch.set(doc(db, "users", uid, "marks", docId(id)), { mark: e.mark, at: e.at } satisfies Doc);
+      }
+      await batch.commit();
     }
     set({ status: "synced" });
   } catch {
@@ -84,21 +104,15 @@ async function syncAll() {
 }
 
 async function pushOne(id: string, entry: Stamped) {
-  if (!session || !navigator.onLine) return;
+  if (!user || !navigator.onLine) return;
   try {
-    const db = await supabase();
-    const { error } = await db.from("marks").upsert(toRow(session.user.id, id, entry), { onConflict: "user_id,game_id" });
-    if (error) throw error;
+    const { db } = await firebase();
+    const { doc, setDoc } = await import("firebase/firestore/lite");
+    await setDoc(doc(db, "users", user.uid, "marks", docId(id)), { mark: entry.mark, at: entry.at } satisfies Doc);
     set({ status: "synced" });
   } catch {
     set({ status: "error" });
   }
-}
-
-function userOf(s: Session | null): SyncState["user"] {
-  if (!s) return undefined;
-  const meta = s.user.user_metadata ?? {};
-  return { email: s.user.email, name: meta.full_name ?? meta.name, avatar: meta.avatar_url ?? meta.picture };
 }
 
 let started = false;
@@ -108,30 +122,38 @@ export function startSync() {
   started = true;
   onMarkChange(pushOne);
   window.addEventListener("online", () => void syncAll());
-  void supabase().then((db) => {
-    db.auth.onAuthStateChange((event, s) => {
-      session = s;
-      set({ ready: true, user: userOf(s), status: s ? state.status : "idle" });
-      if (event === "SIGNED_IN" || (event === "INITIAL_SESSION" && s)) {
-        // Back from Google: drop the ?code= the redirect left behind.
-        if (location.search.includes("code=")) history.replaceState(null, "", location.pathname);
-        void syncAll();
-      }
+  void firebase().then(async ({ auth }) => {
+    const { onAuthStateChanged, getRedirectResult } = await import("firebase/auth");
+    // Finishes a redirect sign-in (the fallback when a popup was blocked).
+    getRedirectResult(auth).catch(() => {});
+    onAuthStateChanged(auth, (u) => {
+      const signedIn = !user && u;
+      user = u;
+      set({
+        ready: true,
+        user: u ? { email: u.email ?? undefined, name: u.displayName ?? undefined, avatar: u.photoURL ?? undefined } : undefined,
+        status: u ? state.status : "idle",
+      });
+      if (signedIn) void syncAll();
     });
   });
 }
 
 export async function signIn() {
-  const db = await supabase();
-  await db.auth.signInWithOAuth({
-    provider: "google",
-    // Back to the page you were on. Supabase must allow it: Auth → URL Configuration → Redirect URLs.
-    options: { redirectTo: `${location.origin}${location.pathname}` },
-  });
+  const { auth } = await firebase();
+  const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import("firebase/auth");
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    // Popup blocked (some in-app browsers): go the long way round.
+    if ((err as { code?: string }).code === "auth/popup-blocked") await signInWithRedirect(auth, provider);
+  }
 }
 
 /** Signs out; your marks stay on this device. */
 export async function signOut() {
-  const db = await supabase();
-  await db.auth.signOut();
+  const { auth } = await firebase();
+  const { signOut: out } = await import("firebase/auth");
+  await out(auth);
 }
