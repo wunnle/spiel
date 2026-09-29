@@ -66,9 +66,6 @@ function GameRow({ game }: { game: Entry }) {
         <Cover game={game} size="sm" className="h-32 w-28 sm:h-40 sm:w-36" />
       </Link>
       <div className="min-w-0 flex-1">
-        {game.categories.length ? (
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{game.categories.join(" · ")}</p>
-        ) : null}
         <Link
           href={gamePath(game)}
           prefetch={false}
