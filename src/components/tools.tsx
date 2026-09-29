@@ -1,11 +1,23 @@
 "use client";
 
 import { lazy, Suspense, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMarks } from "@/lib/marks";
 import { SaveOffline, TOOL_BUTTON, ToolRow } from "./offline";
 
 // The QR library only loads when the dialog opens.
 const TransferDialog = lazy(() => import("./transfer-dialog").then((m) => ({ default: m.TransferDialog })));
+
+export function QrIcon({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="14.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="3.5" y="14.5" width="6" height="6" rx="1" />
+      <path d="M14.5 14.5h2.5v2.5M20.5 14.5v0M14.5 20.5h2.5M20.5 18v2.5h-1" />
+    </svg>
+  );
+}
 
 function SendToApp() {
   const marks = useMarks();
@@ -25,6 +37,7 @@ function SendToApp() {
   return (
     <>
       <ToolRow
+        icon={<QrIcon className="h-5 w-5" />}
         title="Send to the SPIEL app"
         note={
           canSend
@@ -37,29 +50,30 @@ function SendToApp() {
           </button>
         }
       />
-      {open ? (
-        <Suspense fallback={null}>
-          <TransferDialog
-            interested={lists.interested}
-            wantToBuy={lists.wantToBuy}
-            skipped={lists.skipped}
-            onClose={() => setOpen(false)}
-          />
-        </Suspense>
-      ) : null}
+      {/* At page level, so the dialog outlives the account menu it's opened from. */}
+      {open
+        ? createPortal(
+            <Suspense fallback={null}>
+              <TransferDialog
+                interested={lists.interested}
+                wantToBuy={lists.wantToBuy}
+                skipped={lists.skipped}
+                onClose={() => setOpen(false)}
+              />
+            </Suspense>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
 
-/** The footer's handful of occasional tools, kept out of the way of browsing. */
+/** The occasional tools, kept in the account menu out of the way of browsing. */
 export function Tools() {
   return (
-    <section className="max-w-xl">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Tools</h2>
-      <div className="mt-1 divide-y divide-black/5 dark:divide-white/10">
-        <SaveOffline />
-        <SendToApp />
-      </div>
-    </section>
+    <div className="divide-y divide-black/5 dark:divide-white/10">
+      <SendToApp />
+      <SaveOffline />
+    </div>
   );
 }

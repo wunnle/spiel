@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SYNC_ENABLED, signIn, signOut, startSync, useSync } from "@/lib/sync";
+import { Tools } from "./tools";
 
 function GoogleIcon() {
   return (
@@ -17,7 +18,11 @@ function GoogleIcon() {
 const MENU_ITEM =
   "block w-full rounded-md px-2 py-1.5 text-left font-medium text-neutral-700 hover:bg-black/[0.04] dark:text-neutral-200 dark:hover:bg-white/[0.06]";
 
-/** Sign in with Google, or once signed in your avatar with sync status and sign-out. */
+/**
+ * The header's menu: your avatar when signed in (a person icon otherwise), holding sync status, the
+ * occasional tools (Send to SPIEL app, Save for offline) and sign-out. Signed out, a Sign in button
+ * sits beside it.
+ */
 export function Account() {
   const sync = useSync();
   const [menu, setMenu] = useState(false);
@@ -56,36 +61,47 @@ export function Account() {
         </button>
       ) : null}
 
-      {user ? (
-        <button
-          type="button"
-          onClick={() => setMenu((v) => !v)}
-          aria-expanded={menu}
-          aria-label="Account"
-          className="flex items-center gap-2 rounded-full text-sm text-neutral-600 dark:text-neutral-300"
-        >
-          {user.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatar} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full" />
-          ) : (
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900">
-              {(user.name ?? user.email ?? "?")[0].toUpperCase()}
-            </span>
-          )}
-          {note ? <span className="hidden sm:inline">{note}</span> : null}
-        </button>
-      ) : null}
+      <button
+        type="button"
+        onClick={() => setMenu((v) => !v)}
+        aria-expanded={menu}
+        aria-label="Menu"
+        className="flex items-center gap-2 rounded-full text-sm text-neutral-600 dark:text-neutral-300"
+      >
+        {user?.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatar} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full" />
+        ) : user ? (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900">
+            {(user.name ?? user.email ?? "?")[0].toUpperCase()}
+          </span>
+        ) : (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.06] text-neutral-500 dark:bg-white/[0.1] dark:text-neutral-400">
+            <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21a8 8 0 0 1 16 0" />
+            </svg>
+          </span>
+        )}
+        {user && note ? <span className="hidden sm:inline">{note}</span> : null}
+      </button>
 
-      {menu && user ? (
-        <div className="absolute right-0 top-full z-20 mt-2 w-64 rounded-lg border border-black/10 bg-white p-2 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900">
-          <div className="border-b border-black/5 px-2 pb-2 dark:border-white/10">
+      {/* Hidden rather than unmounted, so a cover download carries on when the menu closes. */}
+      <div
+        className={`${menu ? "" : "hidden"} absolute right-0 top-full z-20 mt-2 w-80 max-w-[calc(100vw-2.5rem)] rounded-lg border border-black/10 bg-white p-1.5 text-sm shadow-lg dark:border-white/15 dark:bg-neutral-900`}
+      >
+        {user ? (
+          <div className="border-b border-black/5 px-2 pb-2 pt-1 dark:border-white/10">
             <p className="font-medium text-neutral-900 dark:text-neutral-50">{user.name ?? user.email}</p>
             {user.name ? <p className="text-neutral-500 dark:text-neutral-400">{user.email}</p> : null}
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
               Your marks sync to every device you sign in on.{note ? ` ${note}.` : ""}
             </p>
           </div>
-          <div className="pt-2">
+        ) : null}
+        <Tools />
+        {user ? (
+          <div className="border-t border-black/5 pt-1.5 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
@@ -100,8 +116,8 @@ export function Account() {
               </span>
             </button>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

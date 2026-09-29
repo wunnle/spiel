@@ -92,6 +92,7 @@ export function SaveOffline() {
   const { total } = state;
   return (
     <ToolRow
+      icon={<DownloadIcon className="h-5 w-5" />}
       title="Save for offline"
       note={
         state.phase === "done"
@@ -111,6 +112,14 @@ export function SaveOffline() {
   );
 }
 
+function DownloadIcon({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />
+    </svg>
+  );
+}
+
 /** Shown in the header only while there's no connection: status, not an action. */
 export function OfflineBadge() {
   const online = useOnline();
@@ -125,13 +134,24 @@ export function OfflineBadge() {
 export const TOOL_BUTTON =
   "shrink-0 rounded-md border border-black/10 px-2.5 py-1 text-sm font-medium text-neutral-700 hover:border-black/25 disabled:opacity-40 dark:border-white/15 dark:text-neutral-200 dark:hover:border-white/30";
 
-/** One line in the footer's Tools section. */
-export function ToolRow({ title, note, action }: { title: string; note: string; action: React.ReactNode }) {
+/** One tool in the account menu: name, a line of explanation, and its button. */
+export function ToolRow({
+  icon,
+  title,
+  note,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  note: string;
+  action: React.ReactNode;
+}) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2">
-      <div>
+    <div className="flex items-start gap-3 px-2 py-2.5">
+      <span className="mt-0.5 shrink-0 text-neutral-500 dark:text-neutral-400">{icon}</span>
+      <div className="min-w-0 flex-1">
         <p className="font-medium text-neutral-800 dark:text-neutral-200">{title}</p>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{note}</p>
+        <p className="text-xs leading-snug text-neutral-500 dark:text-neutral-400">{note}</p>
       </div>
       {action}
     </div>
