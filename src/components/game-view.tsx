@@ -86,7 +86,11 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
         {/* Offline, only the list-size covers are saved. */}
         <Cover game={game} size={details ? "lg" : "sm"} className="aspect-square w-full max-w-sm sm:max-w-none" />
         <div className="min-w-0">
-          <div className="flex flex-wrap gap-1.5 text-xs font-semibold">
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50">
+            {game.title}
+          </h1>
+          {names.length ? <p className="mt-1 text-neutral-500 dark:text-neutral-400">{names.join(" · ")}</p> : null}
+          <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-semibold">
             {game.buzz ? <Tag tone="bg-rose-500/10 text-rose-800/90 dark:text-rose-200/80">Buzz</Tag> : null}
             {game.kind ? (
               <Tag
@@ -108,13 +112,6 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
               </Tag>
             ))}
           </div>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl dark:text-neutral-50">
-            {game.title}
-          </h1>
-          {names.length ? <p className="mt-1 text-neutral-500 dark:text-neutral-400">{names.join(" · ")}</p> : null}
-          {game.publisher ? (
-            <p className="mt-1 text-lg text-neutral-600 dark:text-neutral-300">{game.publisher}</p>
-          ) : null}
 
           <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-4">
             <BggScore game={game} large />
@@ -138,6 +135,7 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
       </div>
 
       <dl className="mt-8 max-w-2xl">
+        <Fact label="Publisher">{game.publisher}</Fact>
         <Fact label="Age">{game.age}</Fact>
         <Fact label="Designers">{game.authors}</Fact>
         <Fact label="Languages">{details?.languages?.join(", ")}</Fact>
