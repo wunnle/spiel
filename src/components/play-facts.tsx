@@ -1,4 +1,5 @@
 import type { Entry } from "@/lib/catalog";
+import { boothMap, splitBooth } from "@/lib/site";
 
 function PlayersIcon({ className }: { className: string }) {
   return (
@@ -19,36 +20,85 @@ function ClockIcon({ className }: { className: string }) {
   );
 }
 
+function PinIcon({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.3" />
+    </svg>
+  );
+}
+
+const PILL =
+  "flex items-center gap-1.5 rounded-md bg-black/[0.04] px-2.5 py-1 font-semibold tabular-nums text-neutral-900 dark:bg-white/[0.06] dark:text-neutral-50";
+const PILL_ICON = "h-4 w-4 text-neutral-500 dark:text-neutral-400";
+
 /**
- * Player count and playing time, each behind an icon instead of a label. `large` is the game page's
- * version; the list uses the inline one.
+ * The game page's pills: players, playing time, and a pin per booth that opens the hall plan with
+ * the stand circled. "at …" (a distributor's booth) and the not-yet-listed note go underneath.
  */
-export function PlayFacts({ game, large }: { game: Entry; large?: boolean }) {
+export function FactPills({ game }: { game: Entry }) {
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {game.players ? (
+          <span className={PILL} aria-label={`${game.players} players`} title={`${game.players} players`}>
+            <PlayersIcon className={PILL_ICON} />
+            {game.players}
+          </span>
+        ) : null}
+        {game.time ? (
+          <span className={PILL} aria-label={`${game.time} minutes`} title={`${game.time} minutes`}>
+            <ClockIcon className={PILL_ICON} />
+            {game.time}m
+          </span>
+        ) : null}
+        {game.booths.map((id) => {
+          const { hall, stand } = splitBooth(id);
+          return (
+            <a
+              key={id}
+              href={boothMap(id)}
+              target="_blank"
+              rel="noreferrer"
+              title="Open the hall plan"
+              className={`${PILL} hover:bg-black/[0.08] dark:hover:bg-white/[0.1]`}
+            >
+              <PinIcon className={PILL_ICON} />
+              Hall {hall} · {stand}
+            </a>
+          );
+        })}
+      </div>
+      {!game.booths.length || game.at || game.unlisted ? (
+        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+          {!game.booths.length ? "Booth not announced yet" : game.at ? `At ${game.at}'s booth` : null}
+          {game.unlisted ? (
+            <span className="block">Publisher&apos;s booth — this game isn&apos;t in the official novelties list yet</span>
+          ) : null}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Player count and playing time for a list row, each behind an icon instead of a label. */
+export function PlayFacts({ game }: { game: Entry }) {
   const facts = [
     game.players && { Icon: PlayersIcon, value: game.players, label: `${game.players} players` },
     game.time && { Icon: ClockIcon, value: `${game.time}m`, label: `${game.time} minutes` },
   ].filter((f) => !!f);
   if (!facts.length) return null;
   return (
-    <div
-      className={
-        large
-          ? "flex flex-wrap gap-2"
-          : "flex flex-wrap items-center gap-x-4 text-sm font-semibold text-neutral-800 dark:text-neutral-100"
-      }
-    >
+    <div className="flex flex-wrap items-center gap-x-4 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
       {facts.map(({ Icon, value, label }) => (
         <span
           key={label}
           aria-label={label}
           title={label}
-          className={
-            large
-              ? "flex items-center gap-2 rounded-lg bg-black/[0.04] px-3 py-1.5 text-lg font-semibold tabular-nums text-neutral-900 dark:bg-white/[0.06] dark:text-neutral-50"
-              : "flex items-center gap-1.5 tabular-nums"
-          }
+          className="flex items-center gap-1.5 tabular-nums"
         >
-          <Icon className={large ? "h-5 w-5 text-neutral-500 dark:text-neutral-400" : "h-4 w-4 text-neutral-500 dark:text-neutral-400"} />
+          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
           {value}
         </span>
       ))}

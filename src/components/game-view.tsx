@@ -2,10 +2,9 @@ import Link from "next/link";
 import type { Entry } from "@/lib/catalog";
 import { categoryLabel, categoryTone } from "@/lib/category-tones";
 import { BggScore, PriceLine } from "./bgg";
-import { Booths } from "./booths";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
-import { PlayFacts } from "./play-facts";
+import { FactPills } from "./play-facts";
 
 /** The long-form bits that only the prerendered game page carries (see src/data/details.json). */
 export type Details = {
@@ -119,10 +118,9 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
           </div>
 
           <div className="mt-5">
-            <PlayFacts game={game} large />
+            <FactPills game={game} />
           </div>
 
-          <Booths game={game} className="mt-5 text-lg" />
 
           <div className="mt-5">
             <MarkControl id={game.id} title={game.title} />

@@ -59,7 +59,9 @@ export function DemoOnly() {
 export function PriceLine({ game }: { game: Entry }) {
   const demo = game.bgg?.demoOnly;
   const show = demo ? undefined : game.bgg?.showPrice;
-  const differs = show && show.replace(/\D/g, "") !== game.price?.replace(/\D/g, "");
+  // €149.99 listed and €150 at the fair is the same price.
+  const amount = (p?: string) => Number(p?.replace(/[^\d.]/g, ""));
+  const differs = show && !(Math.abs(amount(show) - amount(game.price)) < 1);
   if (!game.price && !show && !demo) return null;
   return (
     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
