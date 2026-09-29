@@ -5,6 +5,14 @@ import { SYNC_ENABLED, signIn, signOut, startSync, useSync } from "@/lib/sync";
 import { MenuItem } from "./offline";
 import { Tools } from "./tools";
 
+function SignOutIcon({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4" />
+    </svg>
+  );
+}
+
 function SyncIcon({ className }: { className: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -116,17 +124,16 @@ export function Account() {
         </div>
 
         {user ? (
-          <div className="border-t border-black/5 px-3 py-2 dark:border-white/10">
-            <button
-              type="button"
+          <div className="border-t border-black/5 p-1.5 dark:border-white/10">
+            <MenuItem
+              icon={<SignOutIcon className="h-4 w-4" />}
+              label="Sign out"
+              title="Your marks stay on this device"
               onClick={() => {
                 setMenu(false);
                 void signOut();
               }}
-              className="text-xs text-neutral-500 hover:text-neutral-900 hover:underline hover:underline-offset-4 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              Sign out
-            </button>
+            />
           </div>
         ) : null}
       </div>
