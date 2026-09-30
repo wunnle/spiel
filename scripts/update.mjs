@@ -160,6 +160,8 @@ const bgg = preview.map((p) => {
       age: num(item.minage) || undefined,
       designers: (item.links?.boardgamedesigner ?? []).map((l) => l.name).filter((n) => n !== "(Uncredited)"),
       mechanisms: (item.links?.boardgamemechanic ?? []).map((l) => l.name),
+      // Themes and genres ("Fantasy", "Animals"); tags for games the official form left uncategorised.
+      categories: (item.links?.boardgamecategory ?? []).map((l) => l.name).filter((n) => !/^Expansion for/i.test(n)),
       msrp: p.msrp_currency === "EUR" && p.msrp > 0 ? p.msrp : undefined,
     },
   };
@@ -285,10 +287,11 @@ const mechanicGroups = (list) => [...new Set((list ?? []).map(mechanicGroup).fil
 
 /** "49.99 €"; a price a hundred times BGG's (1499 for 14.99) was a missing decimal point. */
 function price(raw, msrp) {
+  const euros = (n) => `${Number.isInteger(n) ? n : n.toFixed(2)} €`;
   const value = Number((raw ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
-  if (!(value >= 1)) return msrp ? `${msrp} €` : undefined;
-  if (msrp && value / msrp > 20) return `${msrp} €`;
-  return `${Number.isInteger(value) ? value : value.toFixed(2)} €`;
+  if (!(value >= 1)) return msrp ? euros(msrp) : undefined;
+  if (msrp && value / msrp > 20) return euros(msrp);
+  return euros(value);
 }
 
 const details = {};
@@ -333,6 +336,7 @@ const catalog = products.map((p) => {
     kind: KIND[themes.find((t) => t.startsWith("TYPE."))],
     level: pick("LEVEL").filter((l) => l !== "N/A")[0],
     categories: plausible.categories(pick("CATEGORIES")),
+    bggCategories: bggFacts.categories?.length ? bggFacts.categories : undefined,
     mechanics: mechanicGroups(mechanisms),
     // Extra words for search that the list doesn't otherwise carry; the full description stays out to
     // keep the browser download small (the blurb covers most of it).

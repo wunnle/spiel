@@ -99,14 +99,14 @@ export function FactPills({ game, atHref }: { game: Entry; /** The distributor's
 }
 
 /** Player count and playing time for a list row, each behind an icon instead of a label. */
-export function PlayFacts({ game }: { game: Entry }) {
+export function PlayFacts({ game, small }: { game: Entry; /** Small print, as on list cards. */ small?: boolean }) {
   const facts = [
     game.players && { Icon: PlayersIcon, value: game.players, label: `${game.players} players` },
     game.time && { Icon: ClockIcon, value: `${game.time}m`, label: `${game.time} minutes` },
   ].filter((f) => !!f);
   if (!facts.length) return null;
   return (
-    <div className="flex flex-wrap items-center gap-x-4 text-sm text-neutral-600 dark:text-neutral-400">
+    <div className={`flex flex-wrap items-center gap-x-3 ${small ? "" : "text-sm"} text-neutral-500 dark:text-neutral-400`}>
       {facts.map(({ Icon, value, label }) => (
         <span
           key={label}
@@ -114,7 +114,7 @@ export function PlayFacts({ game }: { game: Entry }) {
           title={label}
           className="flex items-center gap-1.5 tabular-nums"
         >
-          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+          <Icon className={`${small ? "h-3.5 w-3.5" : "h-4 w-4"} text-neutral-400 dark:text-neutral-500`} />
           {value}
         </span>
       ))}

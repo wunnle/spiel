@@ -1,17 +1,5 @@
 import { bggUrl, type Entry } from "@/lib/entry";
 
-/** The score alone, e.g. on the corner of a list card's cover. */
-export function ScoreBadge({ rating, className = "" }: { rating: number; className?: string }) {
-  return (
-    <span
-      title="BoardGameGeek score"
-      className={`inline-flex h-6 min-w-8 items-center justify-center rounded-md px-1 text-xs font-bold tabular-nums shadow-sm ${tone(rating)} ${className}`}
-    >
-      {score(rating)}
-    </span>
-  );
-}
-
 /** 8.5 stays 8.5; a whole number drops the ".0" — 10, not 10.0. */
 const score = (r: number) => (Number.isInteger(r) ? String(r) : r.toFixed(1));
 

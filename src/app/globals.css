@@ -7,7 +7,8 @@
 :root {
   /* Native bits (scrollbars, checkboxes, the dialog backdrop) follow the theme too. */
   color-scheme: light;
-  --background: #ffffff;
+  /* Light grey page, so white cards can sit on it. */
+  --background: #f4f4f5;
   --foreground: #171717;
 }
 
@@ -15,6 +16,11 @@
   color-scheme: dark;
   --background: #0a0a0a;
   --foreground: #ededed;
+}
+
+/* The desktop layout (sidebar, side-by-side cards) holds down to 896px rather than Tailwind's 1024px. */
+@theme {
+  --breakpoint-lg: 56rem;
 }
 
 @theme inline {

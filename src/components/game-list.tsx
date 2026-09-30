@@ -88,7 +88,7 @@ const euros = (n: number) => n.toLocaleString("en", { style: "currency", currenc
 
 /** The sidebar's quieter version of chip(). */
 function smallChip(active: boolean) {
-  return `whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium transition-colors ${
+  return `whitespace-nowrap rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
     active
       ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-neutral-950"
       : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
@@ -173,7 +173,7 @@ function Section({
   const [storedOpen, toggleOpen] = useSectionOpen(title, defaultOpen);
   const open = !collapsible || storedOpen;
   const heading = (
-    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{title}</h2>
+    <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{title}</h2>
   );
   return (
     <section className="py-3 first:pt-0">
@@ -231,7 +231,7 @@ function Row({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors ${
         active
           ? "bg-orange-500/15 font-medium text-orange-900 dark:text-orange-200"
           : "text-neutral-500 hover:bg-black/[0.04] hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-white/[0.06] dark:hover:text-neutral-200"
@@ -375,13 +375,13 @@ export function GameList() {
               type="button"
               aria-pressed={halls.includes(h)}
               onClick={() => setHalls((v) => toggle(v, h))}
-              className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
                 halls.includes(h)
                   ? `border-transparent ${hallTone(h).solid}`
                   : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
               }`}
             >
-              {halls.includes(h) ? null : <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${hallTone(h).dot}`} />}
+              {halls.includes(h) ? null : <span aria-hidden className={`h-2 w-2 rounded-full ${hallTone(h).dot}`} />}
               {h}
             </button>
           ))}
@@ -406,7 +406,7 @@ export function GameList() {
       >
         {CATEGORY_GROUPS.map((group) => (
           <div key={group.name} className="mt-2 first:mt-0">
-            <p className="px-2 pb-0.5 text-[11px] font-medium text-neutral-400 dark:text-neutral-500">{group.name}</p>
+            <p className="px-2 pb-0.5 text-xs font-medium text-neutral-400 dark:text-neutral-500">{group.name}</p>
             {group.categories.map((c) => (
               <Row key={c} active={categories.includes(c)} onClick={() => toggleCategory(c)} count={CATEGORY_COUNTS.get(c)}>
                 <span className="truncate">{categoryLabel(c)}</span>
@@ -443,7 +443,7 @@ export function GameList() {
   );
 
   return (
-    <div className="lg:grid lg:grid-cols-[13.5rem_1fr] lg:gap-10">
+    <div className="lg:grid lg:grid-cols-[14.5rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
       <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
         <div className="mb-3 lg:hidden">
@@ -477,7 +477,7 @@ export function GameList() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search title, publisher, designer, booth…"
-          className="w-full rounded-lg border border-black/10 bg-transparent px-3.5 py-2.5 text-base outline-none placeholder:text-neutral-400 focus:border-black/30 dark:border-white/15 dark:focus:border-white/35"
+          className="w-full rounded-lg border border-black/10 bg-white px-3.5 py-2.5 text-base outline-none dark:bg-neutral-900 placeholder:text-neutral-400 focus:border-black/30 dark:border-white/15 dark:focus:border-white/35"
         />
 
         {mine === "buy" && shown.length ? <BuyTotal games={shown} /> : null}

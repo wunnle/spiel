@@ -36,6 +36,8 @@ export type Listed = {
   kind?: "New" | "Expansion";
   level?: string;
   categories: string[];
+  /** BGG's categories (themes, genres), used as tags when the official form gave none. */
+  bggCategories?: string[];
   /** Mechanism groups for filtering (both vocabularies folded together; see scripts/update.mjs). */
   mechanics: string[];
   /** Illustrators, detailed mechanisms, languages, theme, BGG's name — words only search uses. */
