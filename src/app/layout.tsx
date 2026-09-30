@@ -39,15 +39,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto w-full max-w-6xl px-5 pt-6 pb-12 font-sans text-neutral-800 dark:text-neutral-200">
           <header className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-              <Link href="/" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
+              <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
+                <svg viewBox="0 0 64 64" aria-hidden className="h-6 w-6 self-center">
+                  <path
+                    fill="#f97316"
+                    d="M32 11a7.5 7.5 0 0 1 7.5 7.5c0 2.3-1 4.3-2.6 5.7 6.9 1.2 14.1 3.6 14.1 7.8 0 3.2-4.3 4.3-8.8 4.6L48 51.5c.4 1-.4 1.5-1.4 1.5H37.4c-.8 0-1.4-.4-1.8-1.1L32 45.4l-3.6 6.5c-.4.7-1 1.1-1.8 1.1h-9.2c-1 0-1.8-.5-1.4-1.5l5.8-14.9c-4.5-.3-8.8-1.4-8.8-4.6 0-4.2 7.2-6.6 14.1-7.8a7.5 7.5 0 0 1 4.7-13.2z"
+                  />
+                </svg>
                 {SITE_NAME}
                 <span className="ml-2 text-sm font-medium text-neutral-400">SPIEL Essen · 22–25 Oct</span>
               </Link>
               <nav className="flex gap-4 text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                <Link href="/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                <Link href="/" className="hover:text-orange-600 dark:hover:text-orange-400">
                   Games
                 </Link>
-                <Link href="/publishers/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                <Link href="/publishers/" className="hover:text-orange-600 dark:hover:text-orange-400">
                   Publishers
                 </Link>
               </nav>

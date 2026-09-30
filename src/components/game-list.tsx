@@ -3,7 +3,8 @@
 import { Fragment, useMemo, useState, useSyncExternalStore } from "react";
 import { CATALOG, CATEGORIES, MECHANICS, priceEuros, type Entry } from "@/lib/catalog";
 import { byFamily, categoryDot, categoryLabel } from "@/lib/category-tones";
-import { MARKS, useMarks, type Mark } from "@/lib/marks";
+import { hallTone } from "@/lib/halls";
+import { MARK_TONE, MARKS, useMarks, type Mark } from "@/lib/marks";
 import { GameRow } from "./game-row";
 import { splitBooth } from "@/lib/site";
 
@@ -88,8 +89,8 @@ const euros = (n: number) => n.toLocaleString("en", { style: "currency", currenc
 function chip(active: boolean) {
   return `whitespace-nowrap rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
     active
-      ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
-      : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/15 dark:text-neutral-300 dark:hover:border-white/30"
+      ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-neutral-950"
+      : "border-black/10 bg-white text-neutral-700 hover:border-black/25 dark:border-white/15 dark:bg-transparent dark:text-neutral-300 dark:hover:border-white/30"
   }`;
 }
 
@@ -163,7 +164,7 @@ function Section({
   const [storedOpen, toggleOpen] = useSectionOpen(title, defaultOpen);
   const open = !collapsible || storedOpen;
   const heading = (
-    <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{title}</h2>
+    <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-800 dark:text-neutral-200">{title}</h2>
   );
   return (
     <section className="border-t border-black/5 py-4 first:border-t-0 first:pt-0 dark:border-white/10">
@@ -223,7 +224,7 @@ function Row({
       aria-pressed={active}
       className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors ${
         active
-          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+          ? "bg-orange-500/15 font-semibold text-orange-900 dark:text-orange-200"
           : "text-neutral-700 hover:bg-black/[0.04] dark:text-neutral-300 dark:hover:bg-white/[0.06]"
       }`}
     >
@@ -319,13 +320,15 @@ export function GameList() {
               onClick={() => setMine(t.id)}
               className={`flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2 py-2 text-sm font-medium transition-colors first:pl-0 sm:gap-1.5 sm:px-3 sm:first:pl-3 ${
                 mine === t.id
-                  ? "border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-50"
+                  ? "border-orange-600 text-neutral-900 dark:border-orange-500 dark:text-neutral-50"
                   : "border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
               }`}
             >
               {t.label}
               {t.count ? (
-                <span className="rounded-full bg-black/[0.06] px-1 text-xs tabular-nums sm:px-1.5 dark:bg-white/[0.1]">{t.count}</span>
+                <span className={`rounded-full px-1 text-xs font-semibold tabular-nums sm:px-1.5 ${t.id ? MARK_TONE[t.id].badge : ""}`}>
+                  {t.count}
+                </span>
               ) : null}
             </button>
           ),
@@ -363,8 +366,13 @@ export function GameList() {
               type="button"
               aria-pressed={halls.includes(h)}
               onClick={() => setHalls((v) => toggle(v, h))}
-              className={chip(halls.includes(h))}
+              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
+                halls.includes(h)
+                  ? `border-transparent ${hallTone(h).solid}`
+                  : "border-black/10 bg-white text-neutral-700 hover:border-black/25 dark:border-white/15 dark:bg-transparent dark:text-neutral-300 dark:hover:border-white/30"
+              }`}
             >
+              {halls.includes(h) ? null : <span aria-hidden className={`h-2 w-2 rounded-full ${hallTone(h).dot}`} />}
               {h}
             </button>
           ))}
@@ -424,7 +432,7 @@ export function GameList() {
   return (
     <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
-      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
+      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:rounded-xl lg:bg-neutral-500/[0.06] lg:p-4 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
         <div className="mb-3 lg:hidden">
           <button
             type="button"
@@ -484,7 +492,8 @@ export function GameList() {
                 return (
                   <Fragment key={g.id}>
                     {heading ? (
-                      <li className="pt-5 text-xs font-semibold uppercase tracking-wide text-neutral-500 first:pt-2 dark:text-neutral-400">
+                      <li className="flex items-center gap-2 pb-1 pt-6 text-sm font-bold text-neutral-900 first:pt-3 dark:text-neutral-50">
+                        <span aria-hidden className={`h-3 w-3 rounded-full ${hall ? hallTone(hall).dot : "bg-neutral-400"}`} />
                         {hall ? `Hall ${hall}` : "Booth not announced yet"}
                       </li>
                     ) : null}

@@ -3,7 +3,7 @@ import { gamePath, type Entry } from "@/lib/entry";
 import { BggScore, DemoOnly } from "./bgg";
 import { Booths } from "./booths";
 import { Cover } from "./cover";
-import { MarkControl } from "./mark-control";
+import { MarkControl, MarkStripe } from "./mark-control";
 import { PlayFacts } from "./play-facts";
 
 /** Just what you scan the list for; the rest is on the game page. */
@@ -16,7 +16,8 @@ export function GameRow({
   hideBooths?: boolean;
 }) {
   return (
-    <li className="flex gap-4 border-b border-black/5 py-4 dark:border-white/10">
+    <li className="relative flex gap-4 border-b border-black/5 py-4 dark:border-white/10">
+      <MarkStripe id={game.id} />
       <Link href={gamePath(game)} prefetch={false} className="block shrink-0">
         <Cover game={game} size="sm" className="h-32 w-28 sm:h-40 sm:w-36" />
       </Link>
@@ -24,7 +25,7 @@ export function GameRow({
         <Link
           href={gamePath(game)}
           prefetch={false}
-          className="text-lg font-medium leading-snug text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
+          className="text-lg font-semibold leading-snug text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
         >
           {game.title}
         </Link>

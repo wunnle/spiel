@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Entry } from "@/lib/entry";
+import { hallTone } from "@/lib/halls";
 import { boothMap, splitBooth } from "@/lib/site";
 
 function PlayersIcon({ className }: { className: string }) {
@@ -63,9 +64,9 @@ export function FactPills({ game, atHref }: { game: Entry; /** The distributor's
               target="_blank"
               rel="noreferrer"
               title="Open the hall plan"
-              className={`${PILL} hover:bg-black/[0.08] dark:hover:bg-white/[0.1]`}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold tabular-nums hover:brightness-95 dark:hover:brightness-125 ${hallTone(hall).pill}`}
             >
-              <PinIcon className={PILL_ICON} />
+              <PinIcon className="h-4 w-4 opacity-70" />
               Hall {hall} · {stand}
             </a>
           );

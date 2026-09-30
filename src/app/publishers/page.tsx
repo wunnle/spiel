@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { COMPANIES, companyPath } from "@/lib/catalog";
+import { hallTone } from "@/lib/halls";
 import { splitBooth } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -53,9 +54,13 @@ export default function Publishers() {
                     className="flex items-baseline justify-between gap-3 rounded px-1 py-1.5 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   >
                     <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">{c.name}</span>
-                    <span className="shrink-0 text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
-                      {halls.length ? `Hall ${halls.join(", ")} · ` : ""}
-                      {c.games.length}
+                    <span className="flex shrink-0 items-center gap-1.5 text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
+                      {halls.map((h) => (
+                        <span key={h} className={`rounded px-1 text-xs font-semibold ${hallTone(h).pill}`} title={`Hall ${h}`}>
+                          {h}
+                        </span>
+                      ))}
+                      <span className="w-6 text-right">{c.games.length}</span>
                     </span>
                   </Link>
                 </li>

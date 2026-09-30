@@ -1,6 +1,6 @@
 "use client";
 
-import { MARKS, toggleMark, useMarks, type Mark } from "@/lib/marks";
+import { MARK_TONE, MARKS, toggleMark, useMarks, type Mark } from "@/lib/marks";
 
 const ICONS: Record<Mark, React.ReactNode> = {
   star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
@@ -11,13 +11,6 @@ const ICONS: Record<Mark, React.ReactNode> = {
     </>
   ),
   bought: <path d="M5 12.5l4.5 4.5L19 7.5" />,
-};
-
-/** Colours per mark when active: amber for interest, sky for the shopping list, green once it's yours. */
-const ACTIVE: Record<Mark, string> = {
-  star: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  buy: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  bought: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
 };
 
 function Icon({ mark, filled }: { mark: Mark; filled: boolean }) {
@@ -59,7 +52,7 @@ export function MarkControl({ id, title, compact }: { id: string; title: string;
               compact ? "h-9 w-9" : "border border-black/10 px-3 py-2 text-sm font-medium dark:border-white/15"
             } ${
               on
-                ? `${ACTIVE[m.id]} ${compact ? "" : "border-transparent"}`
+                ? `${MARK_TONE[m.id].active} ${compact ? "" : "border-transparent"}`
                 : "text-neutral-400 hover:bg-black/[0.04] hover:text-neutral-700 dark:text-neutral-500 dark:hover:bg-white/[0.06] dark:hover:text-neutral-200"
             }`}
           >
@@ -70,4 +63,11 @@ export function MarkControl({ id, title, compact }: { id: string; title: string;
       })}
     </div>
   );
+}
+
+/** A coloured edge on a list row you've marked, so your picks stand out while scrolling. */
+export function MarkStripe({ id }: { id: string }) {
+  const mark = useMarks()[id];
+  if (!mark) return null;
+  return <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-1 rounded-full ${MARK_TONE[mark].stripe}`} />;
 }

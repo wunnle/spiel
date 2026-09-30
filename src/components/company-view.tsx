@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Company, Entry } from "@/lib/entry";
+import { hallTone } from "@/lib/halls";
 import { boothMap, splitBooth } from "@/lib/site";
 import { GameRow } from "./game-row";
 
@@ -37,7 +38,7 @@ export function CompanyView({ company }: { company: Company }) {
                 target="_blank"
                 rel="noreferrer"
                 title="Open the hall plan"
-                className="rounded-md bg-black/[0.04] px-2.5 py-1 text-sm font-semibold tabular-nums text-neutral-900 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-neutral-50 dark:hover:bg-white/[0.1]"
+                className={`rounded-md px-2.5 py-1 text-sm font-semibold tabular-nums hover:brightness-95 dark:hover:brightness-125 ${hallTone(hall).pill}`}
               >
                 Hall {hall} · {stand}
               </a>
