@@ -88,7 +88,7 @@ const euros = (n: number) => n.toLocaleString("en", { style: "currency", currenc
 
 /** The sidebar's quieter version of chip(). */
 function smallChip(active: boolean) {
-  return `whitespace-nowrap rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
+  return `whitespace-nowrap rounded-md border px-2 py-0.5 text-[13px] font-medium transition-colors ${
     active
       ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-neutral-950"
       : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
@@ -96,7 +96,7 @@ function smallChip(active: boolean) {
 }
 
 function chip(active: boolean) {
-  return `whitespace-nowrap rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
+  return `whitespace-nowrap rounded-md border px-2 py-0.5 text-[13px] font-medium transition-colors ${
     active
       ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-neutral-950"
       : "border-black/10 bg-white text-neutral-700 hover:border-black/25 dark:border-white/15 dark:bg-transparent dark:text-neutral-300 dark:hover:border-white/30"
@@ -375,13 +375,13 @@ export function GameList() {
               type="button"
               aria-pressed={halls.includes(h)}
               onClick={() => setHalls((v) => toggle(v, h))}
-              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[13px] font-medium transition-colors ${
                 halls.includes(h)
                   ? `border-transparent ${hallTone(h).solid}`
                   : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
               }`}
             >
-              {halls.includes(h) ? null : <span aria-hidden className={`h-2 w-2 rounded-full ${hallTone(h).dot}`} />}
+              <span aria-hidden className={`h-2 w-2 rounded-full ${halls.includes(h) ? "bg-white/90" : hallTone(h).dot}`} />
               {h}
             </button>
           ))}
@@ -445,7 +445,7 @@ export function GameList() {
   return (
     <div className="lg:grid lg:grid-cols-[14.5rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
-      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
+      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:pt-2.5 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
         <div className="mb-3 lg:hidden">
           <button
             type="button"

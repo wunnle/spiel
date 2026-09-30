@@ -67,8 +67,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
           <main>{children}</main>
 
-          <footer className="mt-16 max-w-3xl space-y-3 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 dark:border-white/10 dark:text-neutral-400">
-            <p>
+          {/* Full page width: the credits at a readable measure on the left, the source links on the right. */}
+          <footer className="mt-16 flex flex-col gap-4 border-t border-black/10 pt-6 text-sm leading-relaxed text-neutral-500 lg:flex-row lg:justify-between lg:gap-12 dark:border-white/10 dark:text-neutral-400">
+            <p className="max-w-2xl">
               An unofficial fan guide, not affiliated with SPIEL Essen or its organiser. Games, booths, box art
               and details come from the official novelties list, which exhibitors fill in themselves and keep
               editing up to the fair; this site refreshes it daily (last {FETCHED}). A game can sit at a
@@ -77,7 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               &ldquo;Most wanted&rdquo; sorts by thumbs-up there. <strong>Buzz</strong> marks the games press and
               community &ldquo;most anticipated&rdquo; lists keep naming. Your marks stay on this device.
             </p>
-            <p className="flex flex-wrap gap-x-4 gap-y-1">
+            <p className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 lg:flex-col lg:items-end">
               {LINKS.map((l) => (
                 <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className="underline underline-offset-4">
                   {l.name}
