@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COMPANY_BY_NAME, companyPath, type Entry } from "@/lib/catalog";
+import { COMPANY_BY_NAME, companyForPublisher, companyPath, type Entry } from "@/lib/catalog";
 import { categoryLabel } from "@/lib/categories";
 import { BggScore, PriceLine } from "./bgg";
 import { Cover } from "./cover";
@@ -20,6 +20,9 @@ export type Details = {
   /** For an expansion: the base game(s) on BGG. */
   expands?: { id: number; name: string }[];
 };
+
+const LINK =
+  "underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-900 dark:decoration-neutral-600 dark:hover:decoration-neutral-100";
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   if (!children) return null;
@@ -61,6 +64,9 @@ function Tag({ tone, children }: { tone: string; children: React.ReactNode }) {
 export function GameView({ game, details }: { game: Entry; details?: Details }) {
   // The company whose booth it's at; its page lists everything shown there.
   const company = game.exhibitor ? COMPANY_BY_NAME.get(game.exhibitor) : undefined;
+  // The publisher's own page: the booth company itself, or (for a game at a distributor's booth) the
+  // publisher's page if it exhibits too.
+  const publisherCompany = game.at ? companyForPublisher(game.publisher) : company;
   const names = [game.en, game.de, details?.bggName && `BGG: ${details.bggName}`].filter(Boolean);
   const description = details?.description.length ? details.description : game.blurb ? [game.blurb] : [];
   const expands = details?.expands?.map((e, i) => (
@@ -91,13 +97,13 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
         <section className={`flex flex-col ${CARD_RAISED}`}>
           <div className="grid gap-5 p-4 sm:grid-cols-[12rem_1fr] sm:p-6 lg:grid-cols-1">
             {/* Offline, only the list-size covers are saved. */}
-            {/* Natural shape, up to 320px tall: wide art fills the width, a tall box shrinks and centres. */}
+            {/* Natural shape, up to ~430px tall: most covers are square and fill the width; a tall box stops there and centres. */}
             <Cover
               game={game}
               size={details ? "lg" : "sm"}
               plain
               className="flex w-full max-w-xs justify-center sm:max-w-none"
-              imgClassName="max-h-80 w-auto max-w-full object-contain"
+              imgClassName="max-h-[27rem] w-auto max-w-full object-contain"
             />
             <div className="min-w-0">
               <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl dark:text-neutral-50">
@@ -150,16 +156,21 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
             <dl className={details?.mechanisms?.length ? "mt-5" : ""}>
               <Fact label="Release">{details?.release}</Fact>
               <Fact label="Publisher">
-                {company && !game.at ? (
-                  <Link
-                    href={companyPath(company)}
-                    className="underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-900 dark:decoration-neutral-600 dark:hover:decoration-neutral-100"
-                  >
-                    {game.publisher ?? company.name}
+                {publisherCompany ? (
+                  <Link href={companyPath(publisherCompany)} className={LINK}>
+                    {game.publisher ?? publisherCompany.name}
                   </Link>
                 ) : (
                   game.publisher
                 )}
+                {game.at && company && company !== publisherCompany ? (
+                  <>
+                    <span className="text-neutral-400"> · at </span>
+                    <Link href={companyPath(company)} className={LINK}>
+                      {company.name}
+                    </Link>
+                  </>
+                ) : null}
               </Fact>
               <Fact label="Designers">{game.authors}</Fact>
               <Fact label="Languages">{details?.languages?.join(", ")}</Fact>

@@ -67,7 +67,9 @@ for (const p of PICKS) {
 export const CATALOG: Entry[] = [
   ...listed.map((g) => {
     const pick = picks.get(g.id);
-    const at = pick?.at ?? (showsElsewhere(g) ? g.exhibitor : undefined);
+    // Only when the official data says the booth isn't the publisher's own (the shortlist's old "at"
+    // notes predate that data and often just repeat the publisher).
+    const at = showsElsewhere(g) ? g.exhibitor : undefined;
     if (!pick) return { ...g, at };
     return {
       ...g,
@@ -110,3 +112,16 @@ export const COMPANIES: Company[] = (() => {
 
 export const COMPANY_BY_NAME = new Map(COMPANIES.map((c) => [c.name, c]));
 export const COMPANY_BY_SLUG = new Map(COMPANIES.map((c) => [c.slug, c]));
+
+/**
+ * A publisher's own company page, when it exhibits: exact name first, then a loose match on the
+ * name's start ("Pegasus Spiele" / "Pegasus Spiele GmbH"). Undefined for publishers that only show
+ * through a distributor.
+ */
+export function companyForPublisher(publisher?: string) {
+  if (!publisher) return undefined;
+  const exact = COMPANY_BY_NAME.get(publisher);
+  if (exact) return exact;
+  const key = norm(publisher).slice(0, 8);
+  return key.length >= 4 ? COMPANIES.find((c) => norm(c.name).startsWith(key)) : undefined;
+}
