@@ -106,7 +106,7 @@ export function PlayFacts({ game }: { game: Entry }) {
   ].filter((f) => !!f);
   if (!facts.length) return null;
   return (
-    <div className="flex flex-wrap items-center gap-x-4 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+    <div className="flex flex-wrap items-center gap-x-4 text-sm text-neutral-600 dark:text-neutral-400">
       {facts.map(({ Icon, value, label }) => (
         <span
           key={label}
