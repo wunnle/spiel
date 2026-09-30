@@ -1,5 +1,5 @@
 import { boothMap, splitBooth } from "@/lib/site";
-import type { Entry } from "@/lib/catalog";
+import type { Entry } from "@/lib/entry";
 
 /** "Hall 3 · 3U210, Hall 7 · 7E100", each opening the official hall plan with the stand circled. */
 export function Booths({ game, className = "" }: { game: Entry; className?: string }) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Entry } from "@/lib/catalog";
+import { COMPANY_BY_NAME, companyPath, type Entry } from "@/lib/catalog";
 import { categoryLabel, categoryTone } from "@/lib/category-tones";
 import { BggScore, PriceLine } from "./bgg";
 import { Cover } from "./cover";
@@ -57,6 +57,8 @@ function Tag({ tone, children }: { tone: string; children: React.ReactNode }) {
  * the /offline-game/ shell renders it from the list data alone.
  */
 export function GameView({ game, details }: { game: Entry; details?: Details }) {
+  // The company whose booth it's at; its page lists everything shown there.
+  const company = game.exhibitor ? COMPANY_BY_NAME.get(game.exhibitor) : undefined;
   const names = [game.en, game.de, details?.bggName && `BGG: ${details.bggName}`].filter(Boolean);
   const description = details?.description.length ? details.description : game.blurb ? [game.blurb] : [];
   const expands = details?.expands?.map((e, i) => (
@@ -118,7 +120,7 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
           </div>
 
           <div className="mt-5">
-            <FactPills game={game} />
+            <FactPills game={game} atHref={company && game.at ? companyPath(company) : undefined} />
           </div>
 
 
@@ -134,7 +136,15 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
 
       <dl className="mt-8 max-w-2xl">
         <Fact label="Release">{details?.release}</Fact>
-        <Fact label="Publisher">{game.publisher}</Fact>
+        <Fact label="Publisher">
+          {company && !game.at ? (
+            <Link href={companyPath(company)} className="underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-900 dark:decoration-neutral-600 dark:hover:decoration-neutral-100">
+              {game.publisher ?? company.name}
+            </Link>
+          ) : (
+            game.publisher
+          )}
+        </Fact>
         <Fact label="Designers">{game.authors}</Fact>
         <Fact label="Languages">{details?.languages?.join(", ")}</Fact>
         <Fact label="Age">{game.age}</Fact>

@@ -15,7 +15,7 @@ function walk(dir) {
 
 // Paths relative to the service worker's scope, so they work under any base path.
 const assets = walk(join(OUT, "_next/static")).map((f) => relative(OUT, f));
-const precache = ["", "offline-game/", "manifest.webmanifest", "icon-192.png", "icon-512.png", ...assets];
+const precache = ["", "offline-game/", "offline-publisher/", "publishers/", "manifest.webmanifest", "icon-192.png", "icon-512.png", ...assets];
 
 // Hashed asset names change whenever code or data does, so they make a good version.
 const version = createHash("sha1").update(precache.join("\n")).digest("hex").slice(0, 10);

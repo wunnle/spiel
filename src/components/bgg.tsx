@@ -1,4 +1,4 @@
-import { bggUrl, type Entry } from "@/lib/catalog";
+import { bggUrl, type Entry } from "@/lib/entry";
 
 /** 8.5 stays 8.5; a whole number drops the ".0" — 10, not 10.0. */
 const score = (r: number) => (Number.isInteger(r) ? String(r) : r.toFixed(1));

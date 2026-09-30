@@ -66,10 +66,13 @@ async function networkFirst(request, fallback) {
   }
 }
 
-/** A game page never opened while online: the shell rebuilds it from the list data. */
+/** A game or publisher page never opened while online: a shell rebuilds it from the list data. */
 async function pageFallback(url) {
   const path = url.pathname.slice(new URL(SCOPE).pathname.length);
   if (path.startsWith("games/")) return caches.match(new URL("offline-game/", SCOPE).href);
+  if (path.startsWith("publishers/") && path !== "publishers/") {
+    return caches.match(new URL("offline-publisher/", SCOPE).href);
+  }
   return caches.match(SCOPE);
 }
 

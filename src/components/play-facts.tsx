@@ -1,4 +1,5 @@
-import type { Entry } from "@/lib/catalog";
+import Link from "next/link";
+import type { Entry } from "@/lib/entry";
 import { boothMap, splitBooth } from "@/lib/site";
 
 function PlayersIcon({ className }: { className: string }) {
@@ -37,7 +38,7 @@ const PILL_ICON = "h-4 w-4 text-neutral-500 dark:text-neutral-400";
  * The game page's pills: players, playing time, and a pin per booth that opens the hall plan with
  * the stand circled. "at …" (a distributor's booth) and the not-yet-listed note go underneath.
  */
-export function FactPills({ game }: { game: Entry }) {
+export function FactPills({ game, atHref }: { game: Entry; /** The distributor's page, for "At …'s booth". */ atHref?: string }) {
   return (
     <div>
       <div className="flex flex-wrap gap-2">
@@ -72,7 +73,21 @@ export function FactPills({ game }: { game: Entry }) {
       </div>
       {!game.booths.length || game.at || game.unlisted ? (
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-          {!game.booths.length ? "Booth not announced yet" : game.at ? `At ${game.at}'s booth` : null}
+          {!game.booths.length ? (
+            "Booth not announced yet"
+          ) : game.at ? (
+            <>
+              At{" "}
+              {atHref ? (
+                <Link href={atHref} className="font-medium text-neutral-700 underline underline-offset-4 dark:text-neutral-300">
+                  {game.at}
+                </Link>
+              ) : (
+                game.at
+              )}
+              &apos;s booth
+            </>
+          ) : null}
           {game.unlisted ? (
             <span className="block">Publisher&apos;s booth — this game isn&apos;t in the official novelties list yet</span>
           ) : null}

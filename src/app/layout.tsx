@@ -38,10 +38,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ServiceWorker />
         <div className="mx-auto w-full max-w-6xl px-5 pt-6 pb-12 font-sans text-neutral-800 dark:text-neutral-200">
           <header className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <Link href="/" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
-              {SITE_NAME}
-              <span className="ml-2 text-sm font-medium text-neutral-400">SPIEL Essen · 22–25 Oct</span>
-            </Link>
+            <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+              <Link href="/" className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
+                {SITE_NAME}
+                <span className="ml-2 text-sm font-medium text-neutral-400">SPIEL Essen · 22–25 Oct</span>
+              </Link>
+              <nav className="flex gap-4 text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                <Link href="/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                  Games
+                </Link>
+                <Link href="/publishers/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                  Publishers
+                </Link>
+              </nav>
+            </div>
             <div className="flex items-center gap-4">
               <OfflineBadge />
               <Account />

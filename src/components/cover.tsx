@@ -1,4 +1,4 @@
-import { coverUrl, type Entry } from "@/lib/catalog";
+import { coverUrl, type Entry } from "@/lib/entry";
 
 /** Box art, or the title's first letter on a tile when the exhibitor gave no picture. */
 export function Cover({ game, size, className }: { game: Entry; size: "sm" | "lg"; className: string }) {

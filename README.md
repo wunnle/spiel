@@ -24,6 +24,10 @@ without network access; CI refreshes them before every build.
 
 `src/data/picks.ts` is the hand-picked shortlist ("Buzz"), merged onto the official data by title.
 
+Publisher pages (`/publishers/…`) are built per **exhibitor**, the company that owns the booth in the
+official list: cleaner than the free-text publisher field, and for distributors (Asmodee, Pegasus…)
+the one place listing everything at their booths.
+
 ## Offline
 
 `scripts/sw.js` is the service worker; `scripts/postbuild.mjs` stamps it with the build's precache list
@@ -32,8 +36,8 @@ into `out/sw.js`.
 - The list page and all JS (including the catalogue) are precached on first visit.
 - Game pages are cached as you open them.
 - "Save for offline" caches every list-size cover (~22 MB).
-- A game page never opened online is served by `/offline-game/`, which rebuilds it from the list data
-  (everything but the long description).
+- A game or publisher page never opened online is served by `/offline-game/` or `/offline-publisher/`,
+  which rebuild it from the list data (everything but a game's long description).
 
 ## Sign-in and synced marks
 
