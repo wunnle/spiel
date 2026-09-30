@@ -6,7 +6,6 @@ import { OfflineBadge, ServiceWorker } from "@/components/offline";
 import { SiteNav } from "@/components/site-nav";
 import { FETCHED } from "@/lib/catalog";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
-import { THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -20,10 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f4f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: "#f4f4f5",
 };
 
 const LINKS = [
@@ -35,11 +31,9 @@ const LINKS = [
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // suppressHydrationWarning: the theme script adds "dark" to <html> before React loads.
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
+    // Light only for now. The dark: styles stay in place (they key off a "dark" class on <html>, which
+    // nothing sets any more), so a theme switch can come back without restyling.
+    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <ServiceWorker />
         <div className="mx-auto w-full max-w-5xl px-5 pt-6 pb-12 font-sans text-neutral-800 dark:text-neutral-200">
