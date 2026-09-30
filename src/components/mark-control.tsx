@@ -65,9 +65,3 @@ export function MarkControl({ id, title, compact }: { id: string; title: string;
   );
 }
 
-/** A coloured edge on a list row you've marked, so your picks stand out while scrolling. */
-export function MarkStripe({ id }: { id: string }) {
-  const mark = useMarks()[id];
-  if (!mark) return null;
-  return <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-1 rounded-full ${MARK_TONE[mark].stripe}`} />;
-}

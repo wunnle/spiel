@@ -12,20 +12,17 @@ export const MARKS: { id: Mark; label: string; short: string }[] = [
 ];
 
 /** Each mark's colour: amber for interest, sky for the shopping list, green once it's yours. */
-export const MARK_TONE: Record<Mark, { badge: string; stripe: string; active: string }> = {
+export const MARK_TONE: Record<Mark, { badge: string; active: string }> = {
   star: {
     badge: "bg-amber-500/20 text-amber-800 dark:text-amber-300",
-    stripe: "bg-amber-500",
     active: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
   },
   buy: {
     badge: "bg-sky-500/20 text-sky-800 dark:text-sky-300",
-    stripe: "bg-sky-500",
     active: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
   },
   bought: {
     badge: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300",
-    stripe: "bg-emerald-500",
     active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   },
 };

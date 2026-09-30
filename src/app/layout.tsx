@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE_NAME} — every new game at SPIEL Essen`, template: `%s · ${SITE_NAME}` },
   description:
     "Every new release and expansion at SPIEL Essen, 22–25 Oct 2026: booths, BoardGameGeek links, a shopping list, and it works offline in the halls.",
-  appleWebApp: { capable: true, title: "Essen ’26", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

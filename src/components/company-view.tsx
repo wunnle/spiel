@@ -56,7 +56,7 @@ export function CompanyView({ company }: { company: Company }) {
         </p>
       ) : null}
 
-      <ul className="mt-6 border-t border-black/5 dark:border-white/10">
+      <ul className="mt-6 space-y-2">
         {games.map((g) => (
           <GameRow key={g.id} game={g} hideBooths />
         ))}

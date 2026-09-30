@@ -6,7 +6,7 @@ export const dynamic = "force-static";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE_NAME,
-    short_name: "Essen ’26",
+    short_name: SITE_NAME,
     description: "Every new game at SPIEL Essen 2026 — works offline in the halls.",
     start_url: `${BASE}/`,
     scope: `${BASE}/`,

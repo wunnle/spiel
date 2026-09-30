@@ -4,7 +4,7 @@ export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 /** Absolute origin + base, for canonical URLs and Open Graph images. */
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
-export const SITE_NAME = "Essen ’26 Novelties";
+export const SITE_NAME = "SpielList";
 
 /** Deep link into the official hall plan with the booth circled. */
 export function boothMap(id: string) {

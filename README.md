@@ -1,4 +1,4 @@
-# Essen ’26 Novelties
+# SpielList
 
 An unofficial guide to every new game at SPIEL Essen, 22–25 October 2026: booths with hall-plan links,
 BoardGameGeek links, "interested / want to buy / bought" marks with a running shopping-list total, a QR

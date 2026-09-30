@@ -432,7 +432,7 @@ export function GameList() {
   return (
     <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
-      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:rounded-xl lg:bg-neutral-500/[0.06] lg:p-4 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
+      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
         <div className="mb-3 lg:hidden">
           <button
             type="button"
@@ -484,7 +484,7 @@ export function GameList() {
 
         {shown.length ? (
           <>
-            <ul className="mt-1">
+            <ul className="mt-3 space-y-2">
               {shown.slice(0, count).map((g, i, page) => {
                 // Sorted by hall: a heading wherever the hall changes.
                 const hall = sort === "hall" ? hallOf.get(g.id) : undefined;
@@ -492,7 +492,7 @@ export function GameList() {
                 return (
                   <Fragment key={g.id}>
                     {heading ? (
-                      <li className="flex items-center gap-2 pb-1 pt-6 text-sm font-bold text-neutral-900 first:pt-3 dark:text-neutral-50">
+                      <li className="flex items-center gap-2 pb-1 pt-5 text-sm font-bold text-neutral-900 first:pt-1 dark:text-neutral-50">
                         <span aria-hidden className={`h-3 w-3 rounded-full ${hall ? hallTone(hall).dot : "bg-neutral-400"}`} />
                         {hall ? `Hall ${hall}` : "Booth not announced yet"}
                       </li>
