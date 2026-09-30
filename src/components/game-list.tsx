@@ -86,6 +86,15 @@ function toggle<T>(list: T[], item: T) {
 
 const euros = (n: number) => n.toLocaleString("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
+/** The sidebar's quieter version of chip(). */
+function smallChip(active: boolean) {
+  return `whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium transition-colors ${
+    active
+      ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-neutral-950"
+      : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
+  }`;
+}
+
 function chip(active: boolean) {
   return `whitespace-nowrap rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
     active
@@ -164,10 +173,10 @@ function Section({
   const [storedOpen, toggleOpen] = useSectionOpen(title, defaultOpen);
   const open = !collapsible || storedOpen;
   const heading = (
-    <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-800 dark:text-neutral-200">{title}</h2>
+    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{title}</h2>
   );
   return (
-    <section className="border-t border-black/5 py-4 first:border-t-0 first:pt-0 dark:border-white/10">
+    <section className="py-3 first:pt-0">
       <div className={`flex items-center justify-between ${open ? "mb-2" : ""}`}>
         {collapsible ? (
           <button
@@ -222,15 +231,15 @@ function Row({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-colors ${
         active
-          ? "bg-orange-500/15 font-semibold text-orange-900 dark:text-orange-200"
-          : "text-neutral-700 hover:bg-black/[0.04] dark:text-neutral-300 dark:hover:bg-white/[0.06]"
+          ? "bg-orange-500/15 font-medium text-orange-900 dark:text-orange-200"
+          : "text-neutral-500 hover:bg-black/[0.04] hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-white/[0.06] dark:hover:text-neutral-200"
       }`}
     >
       <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
       {count !== undefined ? (
-        <span className={`tabular-nums ${active ? "opacity-80" : "text-neutral-400 dark:text-neutral-500"}`}>{count}</span>
+        <span className={`text-xs tabular-nums ${active ? "opacity-80" : "text-neutral-400 dark:text-neutral-600"}`}>{count}</span>
       ) : null}
     </button>
   );
@@ -347,12 +356,12 @@ export function GameList() {
               type="button"
               aria-pressed={kinds.includes(k.id)}
               onClick={() => setKinds((v) => toggle(v, k.id))}
-              className={chip(kinds.includes(k.id))}
+              className={smallChip(kinds.includes(k.id))}
             >
               {k.label}
             </button>
           ))}
-          <button type="button" onClick={() => setBuzzOnly((v) => !v)} className={chip(buzzOnly)}>
+          <button type="button" onClick={() => setBuzzOnly((v) => !v)} className={smallChip(buzzOnly)}>
             Buzz
           </button>
         </div>
@@ -366,13 +375,13 @@ export function GameList() {
               type="button"
               aria-pressed={halls.includes(h)}
               onClick={() => setHalls((v) => toggle(v, h))}
-              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium transition-colors ${
                 halls.includes(h)
                   ? `border-transparent ${hallTone(h).solid}`
-                  : "border-black/10 bg-white text-neutral-700 hover:border-black/25 dark:border-white/15 dark:bg-transparent dark:text-neutral-300 dark:hover:border-white/30"
+                  : "border-black/10 text-neutral-600 hover:border-black/25 dark:border-white/10 dark:text-neutral-400 dark:hover:border-white/25"
               }`}
             >
-              {halls.includes(h) ? null : <span aria-hidden className={`h-2 w-2 rounded-full ${hallTone(h).dot}`} />}
+              {halls.includes(h) ? null : <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${hallTone(h).dot}`} />}
               {h}
             </button>
           ))}
@@ -430,7 +439,7 @@ export function GameList() {
   );
 
   return (
-    <div className="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-10">
+    <div className="lg:grid lg:grid-cols-[13.5rem_1fr] lg:gap-10">
       {tabs("mb-4 flex lg:hidden")}
       <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-2 lg:[scrollbar-width:thin] lg:[scrollbar-color:rgb(128_128_128/0.35)_transparent]">
         <div className="mb-3 lg:hidden">

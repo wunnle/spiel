@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SYNC_ENABLED, signIn, signOut, startSync, useSync } from "@/lib/sync";
 import { MenuItem } from "./offline";
+import { ThemeSwitch } from "./theme-switch";
 import { Tools } from "./tools";
 
 function SignOutIcon({ className }: { className: string }) {
@@ -121,6 +122,10 @@ export function Account() {
             At the fair
           </p>
           <Tools />
+        </div>
+
+        <div className="border-t border-black/5 p-1.5 dark:border-white/10">
+          <ThemeSwitch />
         </div>
 
         {user ? (
