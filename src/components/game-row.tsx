@@ -16,15 +16,15 @@ export function GameRow({
   hideBooths?: boolean;
 }) {
   return (
-    <li className="flex gap-4 rounded-xl bg-neutral-500/[0.06] p-3 sm:p-4 dark:bg-white/[0.04]">
+    <li className="flex gap-3 rounded-xl bg-neutral-500/[0.06] p-3 sm:gap-6 sm:p-5 dark:bg-white/[0.04]">
       <Link href={gamePath(game)} prefetch={false} className="block shrink-0">
-        <Cover game={game} size="sm" className="h-32 w-28 sm:h-40 sm:w-36" />
+        <Cover game={game} size="sm" className="h-28 w-24 sm:h-44 sm:w-40" />
       </Link>
       <div className="min-w-0 flex-1">
         <Link
           href={gamePath(game)}
           prefetch={false}
-          className="text-lg font-semibold leading-snug text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-100"
+          className="text-lg font-semibold leading-snug text-neutral-900 sm:text-xl underline-offset-4 hover:underline dark:text-neutral-100"
         >
           {game.title}
         </Link>
@@ -33,11 +33,11 @@ export function GameRow({
             Buzz
           </span>
         ) : null}
-        <div className="mt-1">
+        <div className="mt-2">
           <PlayFacts game={game} />
         </div>
-        {hideBooths ? null : <Booths game={game} className="mt-0.5 text-sm" />}
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+        {hideBooths ? null : <Booths game={game} className="mt-2 text-sm" />}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <BggScore game={game} />
           {game.bgg?.demoOnly ? <DemoOnly /> : null}
         </div>

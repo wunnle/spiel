@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState, useSyncExternalStore } from "react";
 import { CATALOG, CATEGORIES, MECHANICS, priceEuros, type Entry } from "@/lib/catalog";
-import { byFamily, categoryDot, categoryLabel } from "@/lib/category-tones";
+import { categoryLabel, groupByFamily } from "@/lib/categories";
 import { hallTone } from "@/lib/halls";
 import { MARK_TONE, MARKS, useMarks, type Mark } from "@/lib/marks";
 import { GameRow } from "./game-row";
@@ -45,7 +45,7 @@ const SORTERS: Record<Exclude<Sort, "hall">, (a: Entry, b: Entry) => number> = {
 };
 
 const CATEGORY_COUNTS = new Map(CATEGORIES.map((c) => [c, CATALOG.filter((g) => g.categories.includes(c)).length]));
-const CATEGORY_ORDER = [...CATEGORIES].sort(byFamily);
+const CATEGORY_GROUPS = groupByFamily(CATEGORIES);
 /** Lower case, accents off: "Gaudí" and "gaudi" match. */
 const fold = (s: string) => s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -404,11 +404,15 @@ export function GameList() {
           ) : null
         }
       >
-        {CATEGORY_ORDER.map((c) => (
-          <Row key={c} active={categories.includes(c)} onClick={() => toggleCategory(c)} count={CATEGORY_COUNTS.get(c)}>
-            <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${categoryDot(c)}`} />
-            <span className="truncate">{categoryLabel(c)}</span>
-          </Row>
+        {CATEGORY_GROUPS.map((group) => (
+          <div key={group.name} className="mt-2 first:mt-0">
+            <p className="px-2 pb-0.5 text-[11px] font-medium text-neutral-400 dark:text-neutral-500">{group.name}</p>
+            {group.categories.map((c) => (
+              <Row key={c} active={categories.includes(c)} onClick={() => toggleCategory(c)} count={CATEGORY_COUNTS.get(c)}>
+                <span className="truncate">{categoryLabel(c)}</span>
+              </Row>
+            ))}
+          </div>
         ))}
       </Section>
 
@@ -493,7 +497,7 @@ export function GameList() {
 
         {shown.length ? (
           <>
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-3 space-y-3">
               {shown.slice(0, count).map((g, i, page) => {
                 // Sorted by hall: a heading wherever the hall changes.
                 const hall = sort === "hall" ? hallOf.get(g.id) : undefined;

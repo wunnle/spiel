@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { COMPANY_BY_NAME, companyPath, type Entry } from "@/lib/catalog";
-import { categoryLabel, categoryTone } from "@/lib/category-tones";
+import { categoryLabel } from "@/lib/categories";
 import { BggScore, PriceLine } from "./bgg";
 import { Cover } from "./cover";
 import { MarkControl } from "./mark-control";
@@ -108,7 +108,7 @@ export function GameView({ game, details }: { game: Entry; details?: Details }) 
               <Tag tone="bg-neutral-500/10 text-neutral-700 dark:text-neutral-300">{game.level}</Tag>
             ) : null}
             {game.categories.map((c) => (
-              <Tag key={c} tone={categoryTone(c)}>
+              <Tag key={c} tone="bg-neutral-500/10 text-neutral-700 dark:text-neutral-300">
                 {categoryLabel(c)}
               </Tag>
             ))}
